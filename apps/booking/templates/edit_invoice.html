@@ -1,0 +1,515 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+{% load booking_tags %}
+
+
+{% block title %}Edit - Invoice{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/cleavejs/cleave.js' %}"></script>
+<script src="{% static 'vendor/libs/cleavejs/cleave-phone.js' %}"></script>
+<script src="{% static 'vendor/libs/jquery-repeater/jquery-repeater.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/css/pages/app-invoice.css' %}" />
+{% endblock page_css %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/offcanvas-add-payment.js' %}"></script>
+<script src="{% static 'js/offcanvas-send-invoice.js' %}"></script>
+<script src="{% static 'js/app-invoice-edit.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+
+<div class="row invoice-edit">
+  <!-- Invoice Edit-->
+  <div class="col-lg-9 col-12 mb-lg-0 mb-4">
+    <div class="card invoice-preview-card">
+      <div class="card-body">
+        <div class="row m-sm-4 m-0">
+          <div class="col-md-7 mb-md-0 mb-4 ps-0">
+            <div class="d-flex align-items-center svg-illustration mb-4 gap-2">
+              <span class="app-brand-logo demo">
+                {% include 'partials/logo.html' with height=20 bgcolor="fill: #fff;" %}
+              </span>
+              <span class="app-brand-text demo menu-text fw-bold">{% get_theme_variables 'template_name' %}</span>
+            </div>
+            <p class="mb-2">{{invoice.duoson_address}}</p>
+            <p class="mb-3">{{invoice.duoson_contact}}</p>
+          </div>
+          <div class="col-md-5">
+            <dl class="row mb-2">
+              <dt class="col-sm-6 mb-2 mb-sm-0 text-md-end ps-0">
+                <span class="h4 text-capitalize mb-0 text-nowrap">Invoice</span>
+              </dt>
+              <dd class="col-sm-6 d-flex justify-content-md-end pe-0 ps-0 ps-sm-2">
+                <div class="input-group input-group-merge disabled w-px-150">
+                  <span class="input-group-text">#</span>
+                  <input type="text" class="form-control" disabled placeholder="{{invoice.id}}" value="{{invoice.id}}" id="invoiceId" />
+                </div>
+              </dd>
+              <dt class="col-sm-6 mb-2 mb-sm-0 text-md-end ps-0">
+                <span class="fw-normal">Date:</span>
+              </dt>
+              <dd class="col-sm-6 d-flex justify-content-md-end pe-0 ps-0 ps-sm-2">
+                <input id="issued_date" type="text" class="form-control w-px-150 invoice-date" placeholder="YYYY-MM-DD" />
+              </dd>
+              <dt class="col-sm-6 mb-2 mb-sm-0 text-md-end ps-0">
+                <span class="fw-normal">Due Date:</span>
+              </dt>
+              <dd class="col-sm-6 d-flex justify-content-md-end pe-0 ps-0 ps-sm-2">
+                <input id="due_date" type="text" class="form-control w-px-150 due-date" placeholder="YYYY-MM-DD" />
+              </dd>
+            </dl>
+          </div>
+        </div>
+
+        <hr class="my-3 mx-n4" />
+
+        <div class="row p-sm-4 p-0">
+          <div class="col-md-6 col-sm-5 col-12 mb-sm-0 mb-4">
+            <h6 class="mb-4">Invoice To:</h6>
+            <p class="mb-1">{{event.client}}</p>
+            <p class="mb-1">{{event.company}}</p>
+            <p class="mb-1">{{event.client.get_address}}</p>
+            <p class="mb-1">{{event.client.phone}}</p>
+            <p class="mb-0">{{event.client.email}}</p>
+          </div>
+          <div class="col-md-6 col-sm-7">
+            <h6 class="mb-4">Bill To:</h6>
+            <table>
+              <tbody>
+                <tr>
+                  <td class="pe-4">Total Due:</td>
+                  <td><span class="fw-medium">${{invoice.total_amount | format_currency}}</span></td>
+                </tr>
+                <tr>
+                  <td class="pe-4">Bank name:</td>
+                  <td>{{invoice.payment_account.bank_name}}</td>
+                </tr>
+                <tr>
+                  <td class="pe-4">Country:</td>
+                  <td>{{invoice.payment_account.country}}</td>
+                </tr>
+                <tr>
+                  <td class="pe-4">IBAN:</td>
+                  <td>{{invoice.payment_account.iban}}</td>
+                </tr>
+                <tr>
+                  <td class="pe-4">SWIFT code:</td>
+                  <td>{{invoice.payment_account.swift_code}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <hr class="my-3 mx-n4" />
+
+        <form class="source-item pt-4 px-0 px-sm-4">
+          <div class="mb-3">
+            
+
+
+
+
+
+            {% comment %} USELESS BLOCK STARTS HERE {% endcomment %}
+            <div hidden class="repeater-wrapper pt-0 pt-md-4" id="uselessblock">
+              <div class="d-flex border rounded position-relative pe-0">
+                <div class="row w-100 p-3">
+                  <div class="col-md-6 col-12 mb-md-0 mb-3">
+                    <p class="mb-2 repeater-title">Item</p>
+                    <p class="mb-0">{{item.w_product.product.name}}</p>
+                  </div>
+                  <div class="col-md-3 col-12 mb-md-0 mb-3">
+                    <p class="mb-2 repeater-title">Cost</p>
+                    <p class="mb-0">${{item.get_price}}</p>
+
+                    <input hidden type="number" class="form-control invoice-item-price mb-3" value="{{item.get_price}}" placeholder="24" min="0" />
+                    
+                  </div>
+                  <div class="col-md-2 col-12 mb-md-0 mb-3">
+                    <p class="mb-2 repeater-title">Qty</p>
+                    <p class="mb-0">{{item.quantity}}</p>
+                  </div>
+                  <div class="col-md-1 col-12 pe-0">
+                    <p class="mb-2 repeater-title">{% translate "price" %}</p>
+                    <p class="mb-0">${{item.subtotal }}</p>
+                  </div>
+                </div>
+                <div class="d-flex flex-column align-items-center justify-content-between border-start p-2">
+                  <i class="ti ti-x cursor-pointer" data-repeater-delete></i>
+                  <div class="dropdown">
+                    <i class="ti ti-settings ti-xs cursor-pointer more-options-dropdown" role="button" id="dropdownMenuButton" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    </i>
+
+                    <form class="update-orderitem-form" method="POST">
+                    <div class="dropdown-menu dropdown-menu-end w-px-300 p-3" aria-labelledby="dropdownMenuButton">
+                      <div class="row g-3">
+                        <input hidden name="order_item_id" value="{{item.id}}"/>
+
+                        <div class="col-12">
+                          <label for="custom_price" class="form-label">Custom Price($)</label>
+                          <input name="custom_price" type="number" class="form-control" value="{{item.get_price}}" min="0" />
+                        </div>
+                        <div class="col-12">
+                          <label for="quantity" class="form-label">Quantity</label>
+                          <input name="quantity" type="number" class="form-control" min="0" value="{{item.quantity}}"/>
+                        </div>
+
+                        {% comment %} <div class="col-md-6">
+                          <label for="taxInput1" class="form-label">Tax 1</label>
+                          <select name="tax-1-input" id="taxInput1" class="form-select tax-select">
+                            <option value="0%" selected>0%</option>
+                            <option value="1%">1%</option>
+                            <option value="10%">10%</option>
+                            <option value="18%">18%</option>
+                            <option value="40%">40%</option>
+                          </select>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="taxInput2" class="form-label">Tax 2</label>
+                          <select name="tax-2-input" id="taxInput2" class="form-select tax-select">
+                            <option value="0%" selected>0%</option>
+                            <option value="1%">1%</option>
+                            <option value="10%">10%</option>
+                            <option value="18%">18%</option>
+                            <option value="40%">40%</option>
+                          </select>
+                        </div> {% endcomment %}
+                      
+                      </div>
+                      <div class="dropdown-divider my-3"></div>
+                      <button type="button" class="update-orderitem-btn btn btn-label-primary btn-apply-changes">Apply</button>
+                    </div>
+                  </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% comment %} USELESS BLOCK ENDS HERE {% endcomment %}
+            
+
+            {% for item in order.get_order_items %}
+
+            <div class="repeater-wrapper pt-0 pt-md-4" >
+              <div class="d-flex border rounded position-relative pe-0">
+                <div class="row w-100 p-3">
+                  <div class="col-md-6 col-12 mb-md-0 mb-3">
+                    <p class="mb-2 repeater-title">Item</p>
+                    <p class="mb-0">{{item.w_product.product.name}}</p>
+                  </div>
+                  <div class="col-md-3 col-12 mb-md-0 mb-3">
+                    <p class="mb-2 repeater-title">Cost</p>
+                    <p class="mb-0">${{item.get_price | format_currency}}</p>
+
+                    <input hidden type="number" class="form-control invoice-item-price mb-3" value="{{item.get_price}}" placeholder="24" min="0" />
+                    
+                  </div>
+                  <div class="col-md-2 col-12 mb-md-0 mb-3">
+                    <p class="mb-2 repeater-title">Qty</p>
+                    <p class="mb-0">{{item.quantity}}</p>
+                  </div>
+                  <div class="col-md-1 col-12 pe-0">
+                    <p class="mb-2 repeater-title">{% translate "price" %}</p>
+                    <p class="mb-0">${{item.subtotal | format_currency}}</p>
+                  </div>
+                </div>
+                <div class="d-flex flex-column align-items-center justify-content-between border-start p-2">
+                  <i class="ti ti-x cursor-pointer" data-repeater-delete></i>
+                  <div class="dropdown">
+                    <i class="ti ti-settings ti-xs cursor-pointer more-options-dropdown" role="button" id="dropdownMenuButton" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    </i>
+
+                    <form class="update-orderitem-form" method="POST">
+                    <div class="dropdown-menu dropdown-menu-end w-px-300 p-3" aria-labelledby="dropdownMenuButton">
+                      <div class="row g-3">
+                        <input hidden name="order_item_id" value="{{item.id}}"/>
+
+                        <div class="col-12">
+                          <label for="custom_price" class="form-label">Custom Price($)</label>
+                          <input name="custom_price" type="number" class="form-control" value="{{item.get_price}}" min="0" />
+                        </div>
+                        <div class="col-12">
+                          <label for="quantity" class="form-label">Quantity</label>
+                          <input name="quantity" type="number" class="form-control" min="0" value="{{item.quantity}}"/>
+                        </div>
+
+                        {% comment %} <div class="col-md-6">
+                          <label for="taxInput1" class="form-label">Tax 1</label>
+                          <select name="tax-1-input" id="taxInput1" class="form-select tax-select">
+                            <option value="0%" selected>0%</option>
+                            <option value="1%">1%</option>
+                            <option value="10%">10%</option>
+                            <option value="18%">18%</option>
+                            <option value="40%">40%</option>
+                          </select>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="taxInput2" class="form-label">Tax 2</label>
+                          <select name="tax-2-input" id="taxInput2" class="form-select tax-select">
+                            <option value="0%" selected>0%</option>
+                            <option value="1%">1%</option>
+                            <option value="10%">10%</option>
+                            <option value="18%">18%</option>
+                            <option value="40%">40%</option>
+                          </select>
+                        </div> {% endcomment %}
+                      
+                      </div>
+                      <div class="dropdown-divider my-3"></div>
+                      <button type="button" class="update-orderitem-btn btn btn-label-primary btn-apply-changes">Apply</button>
+                    </div>
+                  </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+            
+          </div>
+          {% comment %} <div class="row pb-4">
+            <div class="col-12">
+              <button type="button" class="btn btn-primary" data-repeater-create>Add Item</button>
+            </div>
+          </div> {% endcomment %}
+        </form>
+
+        <hr class="my-3 mx-n4" />
+
+        <div class="row p-0 p-sm-4">
+          <div class="col-md-6 mb-md-0 mb-3">
+            <div class="d-flex align-items-center mb-3">
+              <label for="salesperson" class="form-label me-4 fw-medium">Salesperson:</label>
+              <input type="text" class="form-control ms-3" id="salesperson" placeholder="Edward Crowley" value="{{invoice.sales_person}}" />
+            </div>
+            <input type="text" class="form-control" id="invoiceMsg" placeholder="Thanks for your business" value="{{invoice.thanks_note}}" />
+          </div>
+          <div class="col-md-6 d-flex justify-content-end">
+            <div class="invoice-calculations">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="w-px-100">Subtotal:</span>
+                <span class="fw-medium">${{invoice.sub_total | format_currency}}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="w-px-100">Discount:</span>
+                <span class="fw-medium">${{invoice.discount | format_currency}}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="w-px-100">Tax:</span>
+                <span class="fw-medium">${{invoice.tax | format_currency}}</span>
+              </div>
+              <hr />
+              <div class="d-flex justify-content-between">
+                <span class="w-px-100">Total:</span>
+                <span class="fw-medium">${{invoice.total_amount| format_currency}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-3 mx-n4" />
+
+        <div class="row px-0 px-sm-4">
+          <div class="col-12">
+            <div class="mb-3">
+              <label for="note" class="form-label fw-medium">Note:</label>
+              <textarea class="form-control" rows="2" id="note">{{invoice.note}}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- /Invoice Edit-->
+
+  <!-- Invoice Actions -->
+  <div class="col-lg-3 col-12 invoice-actions">
+    <div class="card mb-4">
+      <div class="card-body">
+        <button class="btn btn-primary d-grid w-100" data-bs-toggle="offcanvas" data-bs-target="#sendInvoiceOffcanvas">
+          <span class="d-flex align-items-center justify-content-center text-nowrap"><i class="ti ti-send ti-xs me-2"></i>Send Invoice</span>
+        </button>
+        <div class="d-flex my-2">
+          <a href="{% url 'invoice-preview' event.id %}" class="btn btn-label-secondary w-100 me-2">Preview</a>
+          <button type="button" class="btn btn-label-secondary w-100">Save</button>
+        </div>
+        <button class="btn btn-primary d-grid w-100" data-bs-toggle="offcanvas" data-bs-target="#addPaymentOffcanvas">
+          <span class="d-flex align-items-center justify-content-center text-nowrap"><i class="ti ti-currency-dollar ti-xs me-2"></i>Add Payment</span>
+        </button>
+      </div>
+    </div>
+    <div>
+      <p class="mb-2">Accept payments via</p>
+      <select class="form-select mb-4">
+        <option value="Bank Account">Bank Account</option>
+        <option value="Paypal">Paypal</option>
+        <option value="Card">Credit/Debit Card</option>
+        <option value="UPI Transfer">UPI Transfer</option>
+      </select>
+      <div class="d-flex justify-content-between mb-2">
+        <label for="payment-terms" class="mb-0">Payment Terms</label>
+        <label class="switch switch-primary me-0">
+          <input type="checkbox" class="switch-input" id="payment-terms" checked />
+          <span class="switch-toggle-slider">
+            <span class="switch-on"></span>
+            <span class="switch-off"></span>
+          </span>
+          <span class="switch-label"></span>
+        </label>
+      </div>
+      <div class="d-flex justify-content-between mb-2">
+        <label for="client-notes" class="mb-0">Client Notes</label>
+        <label class="switch switch-primary me-0">
+          <input type="checkbox" class="switch-input" id="client-notes" />
+          <span class="switch-toggle-slider">
+            <span class="switch-on"></span>
+            <span class="switch-off"></span>
+          </span>
+          <span class="switch-label"></span>
+        </label>
+      </div>
+      <div class="d-flex justify-content-between">
+        <label for="payment-stub" class="mb-0">Payment Stub</label>
+        <label class="switch switch-primary me-0">
+          <input type="checkbox" class="switch-input" id="payment-stub" />
+          <span class="switch-toggle-slider">
+            <span class="switch-on"></span>
+            <span class="switch-off"></span>
+          </span>
+          <span class="switch-label"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <!-- /Invoice Actions -->
+</div>
+
+<!-- Offcanvas -->
+{% include "partials/_offcanvas/offcanvas_send_invoice.html" %}
+{% include "partials/_offcanvas/offcanvas_add_payment.html" %}
+<!-- /Offcanvas -->
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% comment %} <script>
+  $(document).ready(function() {
+      // Calculate and display total price for each item
+      $(".item").each(function() {
+          var itemPrice = parseFloat($(this).find(".invoice-item-price").text());
+          var quantityInput = $(this).find(".invoice-item-qty");
+          var totalPriceSpan = $(this).find(".invoice-item-total-price");
+          
+          // Calculate and display initial total<  price
+          updateTotalPrice(itemPrice, quantityInput, totalPriceSpan);
+          
+          // Update total price when quantity changes
+          quantityInput.on("input", function() {
+              updateTotalPrice(itemPrice, quantityInput, totalPriceSpan);
+          });
+      });
+  });
+  
+  // Function to update total price
+  function updateTotalPrice(itemPrice, quantityInput, totalPriceSpan) {
+      var quantity = parseInt(quantityInput.val());
+      var totalPrice = itemPrice * quantity;
+      totalPriceSpan.text(totalPrice.toFixed(2));
+  }
+</script> {% endcomment %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const uselessBlock = document.getElementById('uselessblock')
+      const updateOrderItemForms = document.querySelectorAll('.update-orderitem-form');
+
+      updateOrderItemForms.forEach(function(form) {
+          const submitButton = form.querySelector('.update-orderitem-btn');
+
+          submitButton.addEventListener('click', function(event) {
+              event.preventDefault(); // Prevent the default button click behavior
+
+              const formData = new FormData(form);
+              const postData = {};
+              formData.forEach((value, key) => {
+                  postData[key] = value;
+              });
+              {% comment %} alert(JSON.stringify(postData)); // For testing, you can remove this line later {% endcomment %}
+
+              submitButton.disabled = true;
+
+              fetch('{% url "update-order-item-api" %}', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(postData),
+              })
+              .then(response => {
+                  if (!response.ok) {
+                      submitButton.disabled = false;
+                      throw new Error('Network response was not ok');
+                  }
+                  return response.json();
+              })
+              .then(data => {
+                  submitButton.disabled = false;
+                  console.log(data); // Handle the JSON response data as needed
+                  window.location.reload();
+              })
+              .catch(error => {
+                  submitButton.disabled = false;
+                  console.error('There was a problem with the fetch operation:', error);
+              });
+          });
+      });
+
+
+
+
+
+    const elementNames = ['input1', 'input2']; // Hardcoded list of element names
+    
+    elementNames.forEach(elementName => {
+      const element = document.getElementsByName(elementName)[0];
+      
+      if (element) {
+        element.addEventListener('change', async () => {
+          try {
+            const response = await fetch('https://api.example.com/endpoint', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ elementName })
+            });
+            
+            const data = await response.json();
+            console.log(data); // Handle API response data here
+          } catch (error) {
+            console.error('Error:', error);
+          }
+        });
+      } else {
+        console.warn(`Element '${elementName}' not found.`);
+      }
+    });
+  });
+  });
+</script>
+
+
+{% endblock %}

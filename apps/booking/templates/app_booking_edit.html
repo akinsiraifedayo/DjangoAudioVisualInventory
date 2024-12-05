@@ -1,0 +1,150 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Dashboard - Analytics{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/apex-charts/apex-charts.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/swiper/swiper.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-checkboxes-jquery/datatables.checkboxes.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/apex-charts/apexcharts.js' %}"></script>
+<script src="{% static 'vendor/libs/swiper/swiper.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/css/pages/cards-advance.css' %}" />
+{% endblock page_css %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script src="{% static 'js/dashboards-analytics.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+
+
+  <!-- Earning Reports -->
+  <div class="col-lg-12 mb-4">
+    <div class="card h-100">
+      <div class="card-header pb-0 d-flex justify-content-between mb-lg-n4">
+        <div class="card-title mb-0">
+          <h5 class="mb-0">Event</h5>
+          <small class="text-muted">Edit Event</small>
+        </div>
+        
+        <!-- </div> -->
+      </div>
+      <div class="card-body mt-5">
+
+        {% if message %}
+          <div class="alert alert-success d-flex align-items-center mb-3" role="alert">
+            <span class="alert-icon text-success me-2">
+              <i class="ti ti-check ti-xs"></i>
+            </span>
+              {{ message }}
+        </div>
+        {% endif %}
+
+        {% for error in form.errors %}
+          <div class="alert alert-danger d-flex align-items-center" role="alert">
+          <span class="alert-icon text-danger me-2">
+            <i class="ti ti-ban ti-xs"></i>
+          </span>
+          {{ error }}
+        </div>
+        {% endfor %}
+        <form class="event-form2 pt-0" id="eventForm2" method="POST">
+            {% csrf_token %}
+            <div class="mb-3  cdiv">
+              <label class="form-label" for="eventLabel">Client <a href="#" class="btn btn-link text-decoration-none text-purple" onclick="addclient()">Can't find client? Click here</a>
+              </label>
+              {{ form.client }}
+            </div>
+              
+            <div class="mb-3">
+              <label class="form-label" for="eventName">Name</label>
+              {{ form.name }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventLabel">Project Type</label>
+              {{ form.project_type }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventLabel">Event Type</label>
+              {{ form.event_type }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventLabel">Event Manager</label>
+              {{ form.event_manager }}
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label" for="eventStartDate">Start Date</label>
+              {{ form.start }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventEndDate">End Date</label>
+              {{ form.end }}
+            </div>
+            <div class="mb-3">
+              <label class="switch">
+                {{ form.all_day }}
+                <span class="switch-toggle-slider">
+                  <span class="switch-on"></span>
+                  <span class="switch-off"></span>
+                </span>
+                <span class="switch-label">All Day</span>
+              </label>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventURL">Event URL</label>
+              {{ form.url }}
+            </div>
+            <div class="mb-3 select2-primary">
+              <label class="form-label" for="eventGuests">Event Location</label>
+              {{ form.location }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventDescription">Description</label>
+              {{ form.description }}
+            </div>
+            <div class="mb-3 d-flex justify-content-sm-between justify-content-start my-4">
+              <div>
+                <button type="submit" class="btn btn-primary me-sm-3 me-1">Add</button>
+                <button type="reset" class="btn btn-label-secondary btn-cancel me-sm-0 me-1" data-bs-dismiss="offcanvas">Cancel</button>
+              </div>
+              <div><button class="btn btn-label-danger btn-delete-event d-none">Delete</button></div>
+            </div>
+          </div>
+
+
+          </form>
+      </div>
+    </div>
+  </div>
+  <!--/ Earning Reports -->
+
+<script>
+      function addclient(){
+      url = "{% url 'clients-add' %}";
+      window.location.href = url;
+    }
+</script>
+
+
+{% endblock content %}

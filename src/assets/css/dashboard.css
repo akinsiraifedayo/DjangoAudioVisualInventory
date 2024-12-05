@@ -1,0 +1,12 @@
+.ordertab-content{
+    overflow-y: scroll;
+    overflow-x: visible;
+    height: 380px;
+}
+.ordertab-content::-webkit-scrollbar, .upcomeve::-webkit-scrollbar{
+    display: none !important;
+}
+.upcomeve{
+    height: 450px;
+    overflow-y: scroll;
+}

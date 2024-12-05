@@ -1,0 +1,418 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load warehouse_tags %}
+{% load i18n %}
+
+{% block title %}Warehouses{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/@form-validation/umd/styles/index.min.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/tagify/tagify.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-select/bootstrap-select.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/typeahead-js/typeahead.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/tagify/tagify.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-select/bootstrap-select.js' %}"></script>
+<script src="{% static 'vendor/libs/typeahead-js/typeahead.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/bundle/popular.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script src="{% static 'js/forms-tagify.js' %}"></script>
+<script src="{% static 'js/warehouses-add-update.js' %}"></script>
+<script src="{% static 'js/stock-delete.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{{ warehouse.name }} /</span> {% trans "Warehouse" %} {% trans "Stock" %}
+</h4>
+<!-- Add Warehouses Form -->
+<div class="card mb-4">
+  <div class="card-widget-separator-wrapper">
+    <div class="card-body card-widget-separator">
+      <div class="row gy-4 gy-sm-1">
+        <div class="col-sm-6 col-lg-3">
+          <div class="d-flex justify-content-between align-items-start card-widget-1 border-end pb-3 pb-sm-0">
+            <div>
+              <h6 class="mb-2">{% trans "Stock" %}</h6>
+              <h4 class="mb-2">{{ warehouse.stock_quantity }}</h4>
+            </div>
+            <span class="avatar me-sm-4">
+              <span class="avatar-initial bg-label-secondary rounded"><i class="ti-md ti ti-smart-home text-body"></i></span>
+            </span>
+          </div>
+          <hr class="d-none d-sm-block d-lg-none me-4">
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="d-flex justify-content-between align-items-start card-widget-2 border-end pb-3 pb-sm-0">
+            <div>
+              <h6 class="mb-2">{% trans "Available" %}</h6>
+              <h4 class="mb-2">{{ warehouse.available_quantity }}</h4>
+            </div>
+            <span class="avatar p-2 me-lg-4">
+              <span class="avatar-initial bg-label-secondary rounded"><i class="ti-md ti ti-check text-body"></i></span>
+            </span>
+          </div>
+          <hr class="d-none d-sm-block d-lg-none">
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="d-flex justify-content-between align-items-start border-end pb-3 pb-sm-0 card-widget-3">
+            <div>
+              <h6 class="mb-2">{% trans "Damaged" %}</h6>
+              <h4 class="mb-2">{{ warehouse.damaged_quantity }}</h4>
+            </div>
+            <span class="avatar p-2 me-sm-4">
+              <span class="avatar-initial bg-label-secondary rounded"><i class="ti-md ti ti-alert-octagon  text-body"></i></span>
+            </span>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-2">{% trans "Reserved" %}</h6>
+              <h4 class="mb-2">{{ warehouse.reserved_quantity }}</h4>
+            </div>
+            <span class="avatar p-2">
+              <span class="avatar-initial bg-label-secondary rounded"><i class="ti-md ti ti-lock text-body"></i></span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Product List Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="col-md-6 mb-4">
+            <label for="selectpickerLiveSearch" class="form-label">{% trans "Add" %} {% trans "Item" %}</label>
+            <div class="d-flex">
+            <select id="selectpickerLiveSearch" class="selectpicker w-100" data-style="btn-default" data-live-search="true">
+              {% for product in allProducts %}
+              <option data-tokens="{{ product.id }}" value="{% if product.item_type == "barcoded" %}{{ product.id }},{{ product.name }},{{product.item_type}}{% else %}{{ product.id }},{{ product.name }},{{product.item_type}},{% getitemdate product warehouse as date %}{{ date }},{% getitemprice product warehouse as price %}{{ price }},{% getitemstatus product warehouse as status %}{{ status }}{% endif %}">{{ product.name }}</option>
+              {% endfor %}
+            </select> 
+            <button type="button" name="submitButton" id="addproductbtn1" class="btn btn-primary waves-effect waves-light mx-3" data-bs-toggle="modal" onclick="makemodal()" data-bs-target="#animationModal">{% trans "Add" %}</button>
+            <button type="button" name="submitButton" id="addproductbtn2" class="btn btn-primary waves-effect waves-light mx-3" data-bs-toggle="modal" onclick="makemodal2()" data-bs-target="#animationModal2" style="display:none !important;">{% trans "Add" %}</button>
+           
+
+      <!-- Modal -->
+      <form method="POST" id="myForm">
+        {% csrf_token %}
+      <div class="modal fade animate__animated fadeIn" id="animationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modaltitle"></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <input type="text" id="pid" name="pid" class="form-control" placeholder="" required hidden>
+
+              <div class="row">
+                <div class="col mb-3">
+                  <label for="nameAnimation" class="form-label">Barcode</label>
+                  <input type="text" id="barcode" name="barcode" class="form-control" placeholder="Enter Barcode" required>
+                  <div style="height: 10px;">
+                  <span class="text-danger" id="barerror" ></span>
+                </div>
+                </div>
+                <div class="col mb-3">
+                  <label for="nameAnimation" class="form-label">{% translate "status" %}</label>
+                  <select id="selectpickerBasic" name="status" class="selectpicker w-100" data-style="btn-default" required>
+              <option value="available">Available</option>
+              <option value="damaged">Damaged</option>
+              <option value="reserved">Reserved</option>
+            </select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col mb-3">
+                  <label for="nameAnimation" class="form-label">Purchase Price</label>
+                  <input type="number" id="barcode" name="price" class="form-control" placeholder="Enter Item(s) Purchase Price" required>
+                </div>
+                <div class="col mb-3">
+                  <label for="nameAnimation" class="form-label">Purchase Date</label>
+                  <input type="date"  id="barcode" name="date" class="form-control" placeholder="Enter Item(s) Purchase Date" required>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+              <button type="submit" value="submit" class="btn btn-primary" id="savebtn">{% trans "Save" %} {% trans "changes" %}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      <!-- modal 2 -->
+      <form method="POST" id="myForm2">
+        {% csrf_token %}
+      <div class="modal fade animate__animated fadeIn" id="animationModal2" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modaltitle2"></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <input type="text" id="pid2" name="pid" class="form-control" placeholder="" required hidden>
+
+              <div class="row">
+                <div class="col mb-3">
+                  <label for="nameAnimation" class="form-label">Item Count</label>
+                  <input type="number" min="1" value="1" id="barcode" name="count" class="form-control" placeholder="Enter Item Count" required>
+                </div>
+                <div class="col mb-3">
+                  <label for="nameAnimation" class="form-label">{% translate "status" %}</label>
+                  <select name="status" class="myselect3 mystatus w-100" data-style="btn-default" required>
+              <option value="available">Available</option>
+              <option value="damaged">Damaged</option>
+              <option value="reserved">Reserved</option>
+            </select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col mb-3">
+                  <label for="nameAnimation" class="form-label">Purchase Price</label>
+                  <input type="number" id="purprice" name="price" class="form-control" placeholder="Enter Item(s) Purchase Price" required>
+                </div>
+                <div class="col mb-3">
+                  <label for="nameAnimation" class="form-label">Purchase Date</label>
+                  <input type="date"  id="purdate" name="date" class="form-control" placeholder="Enter Item(s) Purchase Date" required>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+              <button type="submit" value="submit" class="btn btn-primary" id="savebtn2">{% trans "Save" %} {% trans "changes" %}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </form>
+          </div>
+          </div>
+
+          {% if products.count is not 0 %}
+
+    <h5 class="card-title mb-0">{% translate "Filter" %}</h5>
+    <div class="d-flex justify-content-between align-items-center row py-3 gap-3 gap-md-0">
+      <div class="col-md-4 product_status"></div>
+      <div class="col-md-4 product_category"></div>
+      <div class="col-md-4 product_stock"></div>
+    </div>
+    {% endif %}
+  </div>
+   {% if products.count is not 0 %}
+  <div class="card-datatable table-responsive">
+    <table class="datatables-products table">
+      <thead class="border-top">
+        <tr>
+          <th>#</th>
+          <th>{% trans "product" %}</th>
+          <th>{% trans "category" %}</th>
+          <th>{% trans "stock" %}</th>
+          <th>{% trans "available" %}</th>
+          <th>{% trans "damaged" %}</th>
+          <th>{% trans "reserved" %}</th>
+          <th>{% trans "price" %}</th>
+          <th>{% trans "actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ product.product.name }}</td>
+          <td>{{ product.product.category.name }}</td>
+          <td>{{ product.stock_quantity }}</td>
+          <td>{{ product.available_quantity }}</td>
+          <td>{{ product.damaged_quantity }}</td>
+          <td>{{ product.reserved_quantity }}</td>
+          <td>${{ product.product.purchase_price }}</td>
+          <td>
+            <div class="dropdown">
+              <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+              <div class="dropdown-menu">
+                {% if request.user|has_permission:"warehouses.edit_warehouse" %}
+                <a class="dropdown-item" href="{% url 'stock-edit' product.id %}"><i class="ti ti-pencil me-1"></i> {% trans "Edit" %}</a>
+                {% endif %}
+                <!-- permission required: delete_w_product -->
+                {% if request.user|has_permission:"warehouses.delete_warehouse" %}
+                <a  class="dropdown-item delete-transaction" href="{% url 'stock-delete' product.id %}"  data-transaction-product="{{ product.product.name|capfirst }}" data-transaction-items="{{ product.stock_quantity }}" data-transaction-warehouse="{{ warehouse.name|capfirst }}"><i class="ti ti-trash me-1"></i> {% trans "Delete" %}</a>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="mb-4">
+      <div class="card-body">
+        <p class="card-text text-capitalize">
+          No products in this warehouse.
+        </p>
+        <p>
+          Kindly utilize the form above to input and submit product information for inclusion into the warehouse. Thank you.
+        </p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!--/ Add Warehouses Form -->
+
+
+<script type="text/javascript">
+  
+  function makemodal(){
+    var values = document.getElementById("selectpickerLiveSearch").value.split(",");
+    pid = values[0];
+    name = values[1];
+    document.getElementById("pid").value = pid;
+    document.getElementById("modaltitle").innerHTML = `Add Item: ${name}`;
+  }
+</script>
+
+<script type="text/javascript">
+  
+  function makemodal2(){
+    var values = document.getElementById("selectpickerLiveSearch").value.split(",");
+    pid = values[0];
+    name = values[1];
+    date = values[3];
+    price = values[4];
+    status = values[5]
+    if(date != ""){
+      var parts = date.split('/');
+      var newDate = new Date(parts[2], parts[1] - 1, parts[0]);
+      var formattedDate = newDate.toISOString().split('T')[0];
+      document.getElementById("purdate").value = formattedDate;
+    }
+    if(price != ""){
+      document.getElementById("purprice").value = price;
+    }
+    if(status != ""){
+      selectElement = document.getElementsByClassName("mystatus")[0];
+      for (var i = 0; i < selectElement.options.length; i++) {
+        if (selectElement.options[i].value == status) {
+          selectElement.options[i].selected = true;
+          break;
+        }
+      }
+    }
+    document.getElementById("pid2").value = pid;
+    document.getElementById("modaltitle2").innerHTML = `Add Item: ${name}`;
+  }
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+function checkproduct(){
+  var values = document.getElementById("selectpickerLiveSearch").value.split(",");
+  type = values[2];
+  if(type=="barcoded"){
+    document.getElementById("addproductbtn1").style.cssText = 'display: inline-flex !important';
+    document.getElementById("addproductbtn2").style.cssText = 'display: none !important';
+  }else{
+    document.getElementById("addproductbtn2").style.cssText = 'display: inline-flex !important';
+    document.getElementById("addproductbtn1").style.cssText = 'display: none !important';
+  }
+}
+
+
+checkproduct();
+
+
+  $('#barcode').on('keydown', function() {
+            document.getElementById("barerror").innerHTML="";
+        });
+    $(document).ready(function() {
+        $('#myForm').submit(function(e) {
+          document.getElementById("savebtn").innerHTML="Loading...";
+            e.preventDefault(); // Prevent the default form submission
+
+            // Perform barcode uniqueness check
+            var enteredBarcode = $('#barcode').val();
+
+            // Make an AJAX request to check barcode uniqueness
+            $.ajax({
+                type: 'GET',
+                url: '{% url "checkbarcode" %}?barcode=' + enteredBarcode,
+                success: function(response) {
+                    // If barcode is unique, allow form submission
+                    if(response == "found"){
+                      document.getElementById("barerror").innerHTML="Barcode not unique!";
+                    }
+                    else if(response == "invalid"){
+                      document.getElementById("barerror").innerHTML="Invalid Barcode!";
+                    }
+                    else if(response == "not found"){
+                      $('#myForm').off('submit').submit(); 
+                    }
+                },
+                complete: function() {
+                    document.getElementById("savebtn").innerHTML = "Save Changes";
+                }
+            });
+            
+        });
+
+
+        $('#myForm2').submit(function(e) {
+          document.getElementById("savebtn").innerHTML="Loading...";
+          e.preventDefault(); // Prevent the default form submission
+          $('#myForm2').off('submit').submit(); 
+          document.getElementById("savebtn").innerHTML = "Save Changes";
+             
+        });
+        var selectElement = document.getElementById('selectpickerLiveSearch');
+            selectElement.addEventListener('change', function() {   
+                checkproduct();
+            });
+    });
+</script>
+
+
+
+{% endblock %}

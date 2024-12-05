@@ -1,0 +1,482 @@
+{% extends layout_path %}
+{% load booking_tags %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Dashboard - Analytics{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/apex-charts/apex-charts.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/swiper/swiper.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-checkboxes-jquery/datatables.checkboxes.css' %}" />
+
+
+<style>
+  .custom-alert {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      z-index: 50000;
+      transform: translate(-50%, -50%);
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 10px 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      display: none;
+  }
+
+  .custom-alert2 {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 50000;
+    transform: translate(-50%, -50%);
+    background-color: green;
+    color: #721c24;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: none;
+}
+</style>
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/apex-charts/apexcharts.js' %}"></script>
+<script src="{% static 'vendor/libs/swiper/swiper.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/css/pages/cards-advance.css' %}" />
+{% endblock page_css %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script src="{% static 'js/dashboards-analytics.js' %}"></script>
+<script src="{% static 'js/modal-add-role2.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+<div id="customAlert" class="custom-alert"></div>
+<div id="customAlert2" class="custom-alert2"></div>
+
+  <!-- Earning Reports -->
+  <div class="col-lg-12 mb-4">
+    <div class="card h-100">
+      <div class="card-header pb-0 d-flex justify-content-between mb-lg-n4">
+        <div class="card-title mb-0" style="width:100%">
+          <div class="d-flex justify-content-between" >
+            <div>
+               <small class="text-muted">Event</small>
+              <h4 class="mb-0 text-capitalize">{{ event.name }}</h4>
+            </div>
+            <div >
+              <button id="mytransbtn" data-bs-target="#transModal" data-bs-toggle="modal" hidden></button>
+              <a href="{% url 'event-product-list' event.id %}"><button class='btn btn-primary mt-2 mx-2'>Edit Products</button></a>
+              <button data-bs-target="#scanModal" data-bs-toggle="modal" class='btn btn-primary mt-2 mx-2'><span class="mx-1">Scan Product</span> <i class="fa fa-barcode mx-1" style="color: #ffff00;"></i></button>
+            </div>
+          </div>
+         
+        </div>
+        
+        <!-- </div> -->
+      </div>
+      <div class="card-body mt-5">
+          
+
+
+          <div class="row mb-3">
+            <div class="col-md">
+              <div class="form-check custom-option custom-option-basic p-3 checked">
+                
+                  <span class="custom-option-header mb-2">
+                    <span class="fw-medium text-heading mb-0">Products</span>
+                  </span>
+                  <span class="custom-option-body">     
+
+                    <ul class="list-group mb-3" >
+            {% for item in order.get_order_items %}
+            <li class="list-group-item p-4">
+              <div class="d-flex gap-3">
+                <div class="flex-shrink-0 d-flex align-items-center">
+                  <img src="{{ item.w_product.product.image.url }}" alt="google home" class="w-px-100">
+                </div>
+                <div class="flex-grow-1">
+
+                  <div class="row">
+                    <div class="col-md-8">
+                      <p class="me-3"><a href="javascript:void(0)" class="text-body"> {{item.w_product.product.name}} </a></p>
+                      <div class="text-muted mb-2 d-flex flex-wrap"><span class="me-1">Brand:</span> <a href="javascript:void(0)" class="me-3">{{item.w_product.product.manufacturer}}</a> <span class="badge bg-label-success">{{ item.w_product.product.availability | yesno:'in stock,out of stock' }}</span></div>
+                      <div class="read-only-ratings mb-3" data-rateyo-read-only="true"></div>
+                      <input type="hidden" name="item_ids" value="{{ item.id }}">
+                      <input name='quantities' type="number" class="form-control form-control-sm w-px-100 mt-2" value="{{item.quantity}}" min="0">
+                    </div>
+                    <div class="col-md-4">
+                      <div class="text-md-end">
+                        <div class="my-2 my-md-4 mb-md-5"><span class="text-primary">${{item.get_price}}</span></div>
+                        {% if item.w_product.product.item_type != "barcoded" %}
+                        <button class="btn btn-primary" onclick="makeadd('{{ item.quantity }}', '{% getitemcount item %}','{{ item.id }}', '{% getitemid item %}', '{% getitemname item %}')">Add</button>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </li>   
+            {% endfor %}
+            
+          
+            
+            
+            
+
+                  </span>
+              </div>
+
+
+
+
+
+
+
+              
+
+
+
+              </div>
+
+
+
+
+
+              <div class="col-md">
+                <div class="form-check custom-option custom-option-basic p-3 checked">
+                  
+                    <span class="custom-option-header mb-2">
+                      <span class="fw-medium text-heading mb-0">Scanned Products</span>
+                    </span>
+                    <span class="custom-option-body">     
+
+                      <ul class="list-group mb-3" id="scanned_list">
+              {% for item in scanned_items %}
+              <li class="list-group-item p-4">
+                <div class="d-flex gap-3">
+                  <div class="flex-shrink-0 d-flex align-items-center">
+                    <img src="{{ item.image }}" alt="google home" class="w-px-100">
+                  </div>
+                  <div class="flex-grow-1">
+
+                    <div class="row">
+                      <div class="col-md-8">
+                        <p class="me-3"><a href="javascript:void(0)" class="text-body"> {{item.name}} </a></p>
+                        <div class="read-only-ratings mb-3" data-rateyo-read-only="true"></div>
+                        <span id="scan{{ item.id }}"><span>Scanned:<span class="mx-2">{{ item.count }} </span></span> </span><br/>
+                        <span id="exp{{ item.id }}">
+                        {% if item.count < item.exp_count %}
+                        <span class="text-warning">Expected:<span class="mx-2">{{ item.exp_count }}</span></span>
+                        {% else %}
+                        <span class="text-success">Satisfied <i class="fa fa-check"></i></span>
+                        {% endif %}
+                        </span>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="text-md-end">
+                          <a href="{% url 'remove-item' item.item_id order.id %}"><button type="button" class="btn-close btn-pinned"></button></a>
+                          <div class="my-2 my-md-4 mb-md-5"><span class="text-primary">${{item.price}}</span></div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </li>   
+              {% endfor %}
+            </ul>
+              
+            
+              
+              
+              <button type='submit' class='btn btn-primary mt-2 mx-2' href="{% url 'event-product-list' event.id %}">Continue Later</button>
+                      
+                    </span>
+                </div>
+
+              </div>
+            </div>
+
+
+      </div>
+    </div>
+  </div>
+  <!--/ Earning Reports -->
+
+
+<!-- Scan Modal -->
+{% include "modal_scan.html" %}
+<!-- / Scan Modal -->
+
+<!-- Tans Modal -->
+{% include "modal_trans.html" %}
+<!-- / Trans Modal -->
+
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+ {% autoescape off %}
+
+  <script type="text/javascript">
+    
+  </script>
+ {% endautoescape %}
+<script>
+
+  function noresfunc(){
+    document.getElementsByClassName("select2-results__message")[0].innerHTML ="<button class='btn btn-primary' onclick='addnew()'  data-bs-toggle='modal' data-bs-target='#modalCenter'>Add A New Client</button>";
+    console.log("type")
+  }
+
+
+  
+ 
+
+  $(document).ready(function() {
+      // Add event listener for the input event on the input field
+      $('.cdiv').on('input','input', function() {
+        // Get the typed value
+        var inputValue = $(this).val();
+
+        // Call your function or perform actions based on the typed value
+        console.log('Typed value:', inputValue);
+
+        noresfunc();
+      });
+    });
+
+
+
+function getCookie(name) {
+var cookieValue = null;
+if (document.cookie && document.cookie !== '') {
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+        var cookie = jQuery.trim(cookies[i]);
+        // Does this cookie string begin with the name we want?
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+        }
+    }
+}
+return cookieValue;
+}
+
+
+function showErrorAlert(message) {
+  var alertDiv = document.getElementById("customAlert");
+  alertDiv.textContent = message;
+  alertDiv.style.display = "block";
+  
+  // Hide the alert after 5 seconds
+  setTimeout(function() {
+      alertDiv.style.display = "none";
+  }, 5000);
+}
+
+function showSuccessAlert(message) {
+  var alertDiv = document.getElementById("customAlert2");
+  alertDiv.textContent = message;
+  alertDiv.style.display = "block";
+  
+  // Hide the alert after 5 seconds
+  setTimeout(function() {
+      alertDiv.style.display = "none";
+  }, 5000);
+}
+
+
+
+function minoradd(id,count, exp){
+  document.getElementById(`scan${id}`).innerHTML=`<span>Scanned:<span class="mx-2">${count} </span></span>`;
+  if(count == exp){
+    document.getElementById(`exp${id}`).innerHTML=`<span class="text-success">Satisfied <i class="fa fa-check"></i></span>`;
+  }
+  var closeButton = document.getElementById("closebtn");
+  closeButton.click();
+  showSuccessAlert("Item added successfully");
+
+}
+
+function fulladd(id,image,name,price, count, exp, item_id){
+  {% autoescape off %}
+  var order_id = "{{ order.id }}";
+  {% endautoescape %}
+  console.log(order_id)
+  url= `/event/remove/item/5/${order_id}/`
+  document.getElementById("scanned_list").innerHTML += `<li class="list-group-item p-4">
+    <div class="d-flex gap-3">
+      <div class="flex-shrink-0 d-flex align-items-center">
+        <img src="${image}" alt="google home" class="w-px-100">
+      </div>
+      <div class="flex-grow-1">
+
+        <div class="row">
+          <div class="col-md-8">
+            <p class="me-3"><a href="javascript:void(0)" class="text-body"> ${name} </a></p>
+            <div class="read-only-ratings mb-3" data-rateyo-read-only="true"></div>
+            <span id="scan${id}"><span>Scanned:<span class="mx-2">${count} </span></span> </span><br/>
+            <span id="exp${id}">
+            </span>
+          </div>
+          <div class="col-md-4">
+            <div class="text-md-end">
+              <a href="${url}"><button type="button" class="btn-close btn-pinned"></button></a>
+              <div class="my-2 my-md-4 mb-md-5"><span class="text-primary">$${price}</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </li> `;
+  if(count == exp){
+    document.getElementById(`exp${id}`).innerHTML=`<span class="text-success">Satisfied <i class="fa fa-check"></i></span>`;
+  }else{
+    document.getElementById(`exp${id}`).innerHTML=`<span class="text-warning">Expected:<span class="mx-2">${exp}</span></span>`;
+  }
+  var closeButton = document.getElementById("closebtn");
+  closeButton.click();
+  showSuccessAlert("Item added successfully");
+
+}
+
+
+function requestTrans(){
+  document.getElementById('transbtn').innerHTML = "Loading";
+  document.getElementById('transbtn').disabled=true;
+  var barcode = document.getElementById("tbar").value;
+  var wareid = document.getElementById("wareid").value;
+  var count = document.getElementById("tcount").value;
+  var warep_id = document.getElementById("warepid").value;
+  var fro_id = document.getElementById("twarehouse").value;
+  if(count ==""){
+    count =0;
+  }
+  $.ajax({
+    type: 'POST',
+    url: '{% url "trans-item-api" %}',
+    data: {
+      'barcode':barcode,
+      'ware_id': wareid,
+      'count': count,
+      'warep_id': warep_id,
+      'fro_id': fro_id,
+    },
+    success: function(response) {
+      if(response.error){
+        showErrorAlert(response.error);
+      }else{
+        showSuccessAlert(response.message);
+        var closeButton = document.getElementById("closebtn2");
+        closeButton.click();
+      }
+
+    },
+    error: function(error) {
+        showErrorAlert('Your request contains errors');
+    },
+    complete: function() {
+        document.getElementById('transbtn').innerHTML = 'Request Transfer <i class="fa fa-truck mx-1"></i>';
+        document.getElementById('transbtn').disabled=false;
+    }
+  });
+}
+
+
+function makeadd(exp, quantity, id, iid, product_name){
+  console.log(exp);
+  console.log(quantity);
+  found = document.getElementById(`scan${iid}`)
+  if(found == undefined){
+    if(exp<=quantity){
+      checkscan(id);
+    }else{
+      document.getElementById("mytransbtn").click();
+      document.getElementById("pname").innerHTML=product_name;
+      document.getElementById("ibar").innerHTML=exp-quantity;
+      document.getElementById("tcountd").style.display="block";
+      document.getElementById("tcount").value=exp-quantity;
+      document.getElementById("warepid").value=iid;
+    }
+  }else{
+    showErrorAlert("Requirement already satisfied")
+  }
+}
+
+
+
+function checkscan(id){
+  document.getElementById('savebtn').innerHTML = "Loading";
+  document.getElementById('savebtn').disabled=true;
+  var barcode = document.getElementById("barcodereal").value;
+  $.ajax({
+    type: 'POST',
+    url: '{% url "scan-item-api" %}',
+    data: {
+      'barcode':barcode,
+      'id':id,
+      'order_id': "{{ order.id }}"
+    },
+    success: function(response) {
+      document.getElementById('savebtn').innerHTML = 'Scan <i class="fa fa-barcode mx-1" style="color: #ffff00;"></i>';
+        document.getElementById('savebtn').disabled=false;
+      if(response.error){
+        if(response.error== "Item not in event warehouse stock"){
+          document.getElementById("mytransbtn").click();
+          document.getElementById("pname").innerHTML=response.product_name;
+          document.getElementById("ibar").innerHTML=barcode;
+          document.getElementById("tbar").value=barcode;
+          if(response.ttype != "barcoded"){
+            document.getElementById("tcountd").style.display="block";
+          }
+        }
+        showErrorAlert(response.error)
+      }
+      if(response.name){
+        fulladd(response.id,response.image,response.name,response.price, response.count, response.exp_count, response.item_id);
+      }else{
+        minoradd(response.id, response.count, response.exp_count);
+      }
+        
+    },
+    error: function(error) {
+        showErrorAlert('Your request contains errors');
+    },
+    complete: function() {
+        document.getElementById('savebtn').innerHTML = 'Scan <i class="fa fa-barcode mx-1" style="color: #ffff00;"></i>';
+        document.getElementById('savebtn').disabled=false;
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  var modalElement = document.getElementById('scanModal');
+  modalElement.addEventListener('shown.bs.modal', function () {
+    var barcodeInput = document.getElementById('barcodereal');
+    barcodeInput.focus();
+  });
+});
+</script>
+
+{% endblock content %}

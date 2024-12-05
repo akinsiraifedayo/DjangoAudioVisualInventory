@@ -1,0 +1,619 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Transfers{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<style>
+  .select2-container--open .select2-dropdown {
+    z-index: 2999; 
+}
+    .custom-alert {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        z-index: 50000;
+        transform: translate(-50%, -50%);
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 10px 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        display: none;
+    }
+  
+    .custom-alert2 {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      z-index: 50000;
+      transform: translate(-50%, -50%);
+      background-color: green;
+      color: #721c24;
+      padding: 10px 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      display: none;
+  }
+  #submitbar{
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+  }
+  #barinput{
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+  }
+</style>
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/transfers-list.js' %}"></script>
+<script src="{% static 'js/warehouses-delete.js' %}"></script>
+
+{% endblock page_js %}
+
+{% block content %}
+
+
+<!-- Transfers Toast -->
+{% if messages %}
+<div class="toast-container end-0 m-1 me-4">
+  {% for message in messages %}
+  <div class="toast {% if message.tags == 'success' %}bg-success{% elif message.tags == 'error' %}bg-danger{% else %}bg-warning{% endif %}" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="true" data-bs-delay="2000">
+    <div class="toast-body text-center text-white fw-medium">
+      {{ message }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+<!--/ Transfers Toast -->
+<div id="customAlert" class="custom-alert"></div>
+<div id="customAlert2" class="custom-alert2"></div>
+
+<!-- Transfers Table -->
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{% translate "Stock" %} /</span> {% translate "Transfers" %}
+</h4>
+<!-- permission required: view_transaction -->
+{% if request.user|has_permission:"transfers.edit_transfers"%}
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <div class="d-flex align-items-end">
+              <h3 class="mb-0 me-2">{{ transfers.count }}</h3>
+              <small class="text-primary"></small>
+            </div>
+            <small>Total Transfers</small>
+          </div>
+          <span class="badge bg-label-primary rounded p-2">
+            <i class="ti ti-arrows-transfer-down ti-sm"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<div class="card">
+  <div class="card-datatable table-responsive" style="overflow-x: unset;">
+    <table class="datatables-transaction table">
+      <thead class="border-top">
+        <tr class="text-nowrap">
+          <th></th>
+          <th>Id</th>
+          <th>Item</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Time</th>
+          {% if request.user|has_permission:"transfers.edit_transfer" %}
+          <th>{% translate "Action" %}/{% translate "Status" %}</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for transfer in transfers %}
+        <tr>
+          <td></td>
+          <td>{{ forloop.counter }}</td>
+          <td class="text-nowrap fw-medium text-heading">{{ transfer.get_item|capfirst }}</td>
+          <td class="text-nowrap fw-medium text-heading">{{ transfer.fro.name|capfirst }}</td>
+          <td class="text-nowrap">{{ transfer.to.name }}</td>
+          <td class="text-nowrap">{{ transfer.time | default:"" }}</td>
+          {% if request.user|has_permission:"transfers.edit_transfer" %}
+          <td id="{{ transfer.id }}actions">
+            {% if transfer.status == "pending" %}
+            <div class="dropdown">
+              <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+              <div class="dropdown-menu">
+                {% if transfer.item_type == 'single' or transfer.product.item_type != "barcoded" %}
+                <button onclick='accept({{ transfer.id }})' class="dropdown-item"><i class="ti ti-check me-1"></i> Approve</button>
+                {% else %}
+                <button onclick='makemodal("{{ transfer.id }}", "{{ transfer.product.name }}","{{ transfer.fro.name }}", "{{ transfer.to.name }}")' class="dropdown-item" data-bs-toggle="modal" data-bs-target="#animationModal"><i class="ti ti-check me-1"></i> Approve</button>
+                {% endif %}
+                <button onclick='reject({{ transfer.id }})' class="dropdown-item"><i class="ti ti-x me-1"></i> Reject</button>
+              </div>
+            </div>
+            {% elif transfer.status == "transferred" %}
+            <span class='text-success'>Transferred <i class='ti ti-check me-1'></i></span>
+            {% else %}
+            <span class='text-danger'>Rejected <i class='ti ti-x me-1'></i></span>
+            {% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+<!--/ Transfers Table -->
+
+
+
+<div class="modal fade animate__animated fadeIn" id="animationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-center" id="modaltitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label for="nameAnimation" class="form-label">{% translate "Added Items" %}</label>
+            <div id="addeditems">
+
+            </div>
+            
+          </div>
+          <input id="mytransid" hidden/>
+          
+          <div class="col-md-6 mb-3">
+            <label for="nameAnimation" class="form-label">{% translate "Enter Item Barcode" %}</label>
+            <div style="display:flex;"><input class="form-control" id="barinput" placeholder="Barcode of item to add..." /> <button id="submitbar" class="btn btn-primary" onclick="addtransitem()"><i class="fa fa-check"></i></button></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="closebtn2" type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+        <button type="button" id="force_submit_btn" onclick="maketrans()" class="btn btn-primary">{% trans "Approve Transfer" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade animate__animated fadeIn" id="animationModal2" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modaltitle">Make A New Transfer Request</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="col-md-6">
+            <label for="v" class="form-label">{% translate "Transfer" %} {% translate "Type" %}</label>
+            <select id="transtype" class="form-control selectpicker form-select-md mb-5">
+              <option value="product">Product Specific</option>
+              <option value="item">Item Specific</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" id="pspecific">
+          <div class="col-md-6 mb-3">
+            <label for="tproducts" class="form-label">{% translate "Products" %}</label>
+            <select id="tproducts" class="select2 form-select form-select-md" data-allow-clear="true" refilter="this.value">
+              {% for product in products %}
+              <option value="{{product.id}}">{{product.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="nameAnimation" class="form-label">{% translate "Quantity" %}</label>
+            <input id="modalq2" name="quantity" class="form-control" />
+          </div>
+
+          
+          <div class="col-md-6 mb-3">
+            <label for="nameAnimation" class="form-label">{% translate "From" %}</label>
+            <select id="fwarehouse2" name="ware_id" class="selectpicker w-100 form-control" data-style="btn-default" required>
+              {% for warehouse in warehouses %}
+              <option value="{{warehouse.id}}">{{warehouse.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="nameAnimation" class="form-label">{% translate "To" %}</label>
+            <select id="twarehouse2" name="fro_id" class="selectpicker w-100 form-control" data-style="btn-default" required>
+              {% for warehouse in rewarehouses %}
+              <option value="{{warehouse.id}}">{{warehouse.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+
+        <div class="row" id="ispecific">
+          <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="tbarcode" class="form-label">{% translate "Barcode" %}</label>
+            <input id="tbarcode" name="barcode" class="form-control" />
+          </div>
+        </div>
+
+          
+          <div class="col-md-6 mb-3">
+            <label for="nameAnimation" class="form-label">{% translate "From" %}</label>
+            <select id="fwarehouse3" name="ware_id" class="selectpicker w-100 form-control" data-style="btn-default" required>
+              {% for warehouse in warehouses %}
+              <option value="{{warehouse.id}}">{{warehouse.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="nameAnimation" class="form-label">{% translate "To" %}</label>
+            <select id="twarehouse3" name="fro_id" class="selectpicker w-100 form-control" data-style="btn-default" required>
+              {% for warehouse in rewarehouses %}
+              <option value="{{warehouse.id}}">{{warehouse.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="closebtn3" type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+        <button type="button" id="force_submit_btn2" onclick="maketrans2()" class="btn btn-primary">{% trans "Request Transfer" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+
+  var addWarehouseBtn = '{% if request.user|has_permission:"companies.add_client" %}' + true + '{% endif %}';
+
+
+
+  function showErrorAlert(message) {
+    var alertDiv = document.getElementById("customAlert");
+    alertDiv.textContent = message;
+    alertDiv.style.display = "block";
+    
+    // Hide the alert after 5 seconds
+    setTimeout(function() {
+        alertDiv.style.display = "none";
+    }, 5000);
+  }
+  
+  function showSuccessAlert(message) {
+    var alertDiv = document.getElementById("customAlert2");
+    alertDiv.textContent = message;
+    alertDiv.style.display = "block";
+    
+    // Hide the alert after 5 seconds
+    setTimeout(function() {
+        alertDiv.style.display = "none";
+    }, 5000);
+  }
+
+
+
+
+  function makemdivs(){
+    var transtype = document.getElementById("transtype").value;
+    if(transtype == "item"){
+      document.getElementById("ispecific").style.display= "flex"
+      document.getElementById("pspecific").style.display= "none"
+    }else{
+      document.getElementById("ispecific").style.display= "none"
+      document.getElementById("pspecific").style.display= "flex"
+    }
+  }
+
+  var selectElement = document.getElementById("transtype");
+selectElement.addEventListener("change", function(event) {
+   makemdivs();
+});
+
+
+  function maketransmodal(){
+    var myModal = new bootstrap.Modal(document.getElementById('animationModal2'));
+    myModal.show();
+    makemdivs();
+  }
+
+  function showAlert(message) {
+    var alertDiv = document.getElementById("customAlert");
+    alertDiv.textContent = message;
+    alertDiv.style.display = "block";
+    
+    // Hide the alert after 5 seconds
+    setTimeout(function() {
+        alertDiv.style.display = "none";
+    }, 5000);
+}
+
+const modbtn2 = document.getElementById('force_submit_btn2');
+
+function maketrans2(){
+  inner = modbtn2.innerHTML;
+  modbtn2.innerHTML = "Loading";
+  modbtn2.disabled=true;
+  var transtype = document.getElementById("transtype").value;
+  if(transtype == "product"){
+    var count = document.getElementById("modalq2").value;
+    var p_id = document.getElementById("tproducts").value;
+    var fro_id = document.getElementById("fwarehouse2").value;
+    var to_id = document.getElementById("twarehouse2").value;
+    if(count ==""){
+      count =1;
+    }
+    $.ajax({
+      type: 'POST',
+      url: '{% url "transfer-request-multiple" %}',
+      data: {
+        'product_id': p_id,
+        'fro': fro_id,
+        'to': to_id,
+        'quantity': count
+      },
+      success: function(response) {
+        if(response.error){
+          showErrorAlert(response.error);
+        }else{
+          showSuccessAlert(response.message);
+          var closeButton = document.getElementById("closebtn3");
+          closeButton.click();
+          window.location.reload();
+        }
+  
+      },
+      error: function(error) {
+          showErrorAlert('Your request contains errors');
+      },
+      complete: function() {
+          modbtn2.innerHTML = inner;
+          modbtn2.disabled=false;
+      }
+    });
+  }else{
+    var barcode = document.getElementById("tbarcode").value;
+    var fro_id = document.getElementById("fwarehouse3").value;
+    var to_id = document.getElementById("twarehouse3").value;
+    $.ajax({
+      type: 'POST',
+      url: '{% url "transfer-request-single" %}',
+      data: {
+        'barcode': barcode,
+        'fro': fro_id,
+        'to': to_id,
+      },
+      success: function(response) {
+        if(response.error){
+          showErrorAlert(response.error);
+        }else{
+          showSuccessAlert(response.message);
+          var closeButton = document.getElementById("closebtn3");
+          closeButton.click();
+          window.location.reload();
+        }
+  
+      },
+      error: function(error) {
+          showErrorAlert('Your request contains errors');
+      },
+      complete: function() {
+          modbtn2.innerHTML = inner;
+          modbtn2.disabled=false;
+      }
+    });
+  }
+}
+
+
+
+
+const modbtn = document.getElementById("force_submit_btn");
+const subbarbtn = document.getElementById("submitbar");
+function makedis(){
+  var val = modbtn.innerHTML
+  var val2 = subbarbtn.innerHTML
+  modbtn.innerHTML = "Loading..."
+  modbtn.disabled=true;
+  subbarbtn.innerHTML = "..."
+  modbtn.disabled=true;
+  return [val,val2]
+}
+
+function unmakedis(vals){
+  modbtn.innerHTML = vals[0];
+  modbtn.disabled=false;
+  subbarbtn.innerHTML = vals[1];
+  modbtn.disabled=false;
+}
+
+
+
+  function gettransitems(transId){
+    vals = makedis();
+    $.ajax({
+      type: 'POST',
+      url: '{% url "get-trans-items" %}',
+      data: {
+        "id":transId,
+      },
+      success: function(response) {
+          // If barcode is unique, allow form submission
+          if(response.items){
+            var items = response.items
+            for (let i = 0; i <= items.length -1; i++) {
+              document.getElementById("addeditems").innerHTML += `<div class="mb-2 d-flex"><span class="text-success">${items[i]["barcode"]}</span><span class="text-danger mx-1" onclick="removetransitem('${items[i]["id"]}')"><i class="fa fa-trash"></i></span></div>`
+            }
+          }
+          
+      },
+  });
+  unmakedis(vals);
+  }
+
+
+
+
+  function addtransitem(){
+    vals = makedis();
+    transId = document.getElementById("mytransid").value;
+    barcode = document.getElementById("barinput").value;
+    $.ajax({
+      type: 'POST',
+      url: '{% url "add-trans-item" %}',
+      data: {
+        "trans_id":transId,
+        "barcode":barcode
+      },
+      success: function(response) {
+          if(response.error){
+            showErrorAlert(response.error);
+          }else{
+            document.getElementById("addeditems").innerHTML += `<div id="addeditem${response.id}" class="mb-2 d-flex"><span class="text-success">${response.barcode}</span><span class="text-danger mx-1" onclick="removetransitem('${response.id}')"><i class="fa fa-trash"></i></span></div>`
+            showSuccessAlert(response.message);
+            document.getElementById("barinput").value="";
+          }
+          
+      },
+  });
+  unmakedis(vals);
+  }
+
+  function removetransitem(itemId){
+    transId = document.getElementById("mytransid").value;
+    $.ajax({
+      type: 'POST',
+      url: '{% url "remove-trans-item" %}',
+      data: {
+        "trans_id":transId,
+        "id":itemId
+      },
+      success: function(response) {
+          if(response.error){
+            showErrorAlert(response.error);
+          }else{
+            document.getElementById(`addeditem${itemId}`).remove();
+            showSuccessAlert(response.message);
+          }
+          
+      },
+  });
+  }
+
+
+  function makemodal(transId, name, fwarehouse, twarehouse){
+    document.getElementById("modaltitle").innerHTML = `Transfering ${name} from ${fwarehouse} to ${twarehouse}`;
+    document.getElementById("barinput").value="";
+    document.getElementById("mytransid").value=transId;
+    document.getElementById("addeditems").innerHTML="";
+    gettransitems(transId)
+  }
+
+
+
+  
+ 
+
+  function makeapp(id){
+    var actions = `${id}actions`
+    document.getElementById(actions).innerHTML= "<span class='text-success'>Transferred <i class='ti ti-check me-1'></i></span>";
+  }
+
+  function makerej(id){
+    var actions = `${id}actions`
+    document.getElementById(actions).innerHTML= "<span class='text-danger'>Rejected <i class='ti ti-x me-1'></i></span>";
+  }
+
+  function maketrans(){
+    var vals = makedis();
+    transId = document.getElementById("mytransid").value;
+    accept(transId);
+    unmakedis(vals);
+  
+  }
+
+
+  function accept(id){
+            // Make an AJAX request to check barcode uniqueness
+            $.ajax({
+                type: 'GET',
+                url: '{% url "stock-transfer-accept" %}?id=' + id,
+                success: function(response) {
+                    // If barcode is unique, allow form submission
+                    if(response == "transferred"){
+                      makeapp(id)
+                      var closeButton = document.getElementById("closebtn2");
+                      closeButton.click();
+                    }
+                    else{
+                      showAlert(response)
+                    }
+                    
+                },
+            });
+            
+        };
+
+function reject(id){
+          // Make an AJAX request to check barcode uniqueness
+          $.ajax({
+              type: 'GET',
+              url: '{% url "stock-transfer-reject" %}?id=' + id,
+              success: function(response) {
+                  // If barcode is unique, allow form submission
+                  if(response == "rejected"){
+                    makerej(id)
+                  }
+                  else{
+                    showAlert(response)
+                  }
+                  
+              },
+          });
+          
+      };
+
+      $(document).ready(function() {
+        $('#tproducts').select2();
+    });
+
+</script>
+
+
+{% endblock %}

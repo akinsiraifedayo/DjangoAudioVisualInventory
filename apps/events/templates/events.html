@@ -1,0 +1,155 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Companies{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script src="{% static 'js/events-list.js' %}"></script>
+<script src="{% static 'js/events-delete.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+
+
+<!-- Warehouses Toast -->
+{% if messages %}
+<div class="toast-container end-0 m-1 me-4">
+  {% for message in messages %}
+  <div class="toast {% if message.tags == 'success' %}bg-success{% elif message.tags == 'error' %}bg-danger{% else %}bg-warning{% endif %}" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="true" data-bs-delay="2000">
+    <div class="toast-body text-center text-white fw-medium">
+      {{ message }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+<!--/ Warehouses Toast -->
+
+<!-- Warehouses Table -->
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{% translate "Events" %} /</span> {% translate "All Events" %} {% translate "List" %}
+</h4>
+<!-- permission required: view_transaction -->
+{% if request.user|has_permission:"events.view_event"%}
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <div class="d-flex align-items-end">
+              <h3 class="mb-0 me-2">{{ event_count }}</h3>
+              <small class="text-primary"></small>
+            </div>
+            <small>Total Events</small>
+          </div>
+          <span class="badge bg-label-primary rounded p-2">
+            <i class="ti ti-arrows-transfer-down ti-sm"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+<div class="card">
+  <div class="card-datatable table-responsive" style="overflow-x: unset;">
+    <table class="datatables-transaction table">
+      <div class="col-lg-6 mx-2 card-header">
+        <label for="select2Basic" class="form-label">Status</label>
+        
+        <select id="select2Basic" class="select2 form-select form-select-lg" data-allow-clear="true" onchange="refilter(this.value)">
+          <option value="ALL" {% if selected_event_status is None %} selected {% endif %}>All Status</option>
+          {% for status, _ in event_status_choices %}
+              <option value="{{ status }}" {% if selected_event_status == status %} selected {% endif %}>{{ status }}</option>
+          {% endfor %}
+      </select>
+      </div>
+      <thead class="border-top">
+        <tr class="text-nowrap">
+          <th></th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Client</th>
+          <th>Location</th>
+          <th>Starting Period</th>
+          <th>Ending Period</th>
+          <th>{% translate "actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+        <tr>
+          <td></td>
+          <td class="text-nowrap fw-medium text-heading">{{ event.name }}</td>
+          <td class="text-nowrap">{{ event.status }}</td>
+          <td class="text-nowrap">{{ event.client | default:"None" }}</td>
+          <td class="text-nowrap">{{ event.location | default:"None" }}</td>
+          <td class="text-nowrap">{{ event.start | default:"None" }}</td>
+          <td class="text-nowrap">{{ event.end | default:"None" }}</td>
+          <td>
+            <div class="dropdown">
+              <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+              <div class="dropdown-menu">
+                {% if request.user|has_permission:"events.edit_client" %}
+                <a class="dropdown-item" href="{% url 'app-booking-detail' event.id %}"><i class="ti ti-eye-edit me-1"></i> View</a>
+                {% endif %}
+                {% if request.user|has_permission:"events.edit_client" %}
+                <a class="dropdown-item" href="{% url 'app-booking-edit' event.id %}"><i class="ti ti-pencil me-1"></i> Edit</a>
+                {% endif %}
+                <!-- permission required: delete_w_product -->
+                {% if request.user|has_permission:"events.delete_client" %}
+                <a  class="dropdown-item delete-transaction" href="{% url 'events-delete' event.id %}"  data-transaction-username="{{ event.name }}"><i class="ti ti-trash me-1"></i> Delete</a>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+<!--/ Warehouses Table -->
+<script>
+var addWarehouseBtn = '{% if request.user|has_permission:"companies.add_client" %}' + true + '{% endif %}';
+
+function refilter(event_status) {
+    var url = '{% url "events" %}';
+    if (event_status === "ALL" || event_status === "") {
+        window.location.href = url;
+    } else {
+        window.location.href = url + event_status + '/';
+    }
+  }
+</script>
+
+
+
+
+{% endblock %}

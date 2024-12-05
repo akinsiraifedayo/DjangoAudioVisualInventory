@@ -1,0 +1,551 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+{% load booking_tags %}
+
+{% block title %}Event - Details{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/apex-charts/apex-charts.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/swiper/swiper.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-checkboxes-jquery/datatables.checkboxes.css' %}" />
+
+<style>
+  .custom-alert {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      z-index: 50000;
+      transform: translate(-50%, -50%);
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 10px 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      display: none;
+  }
+
+  .custom-alert2 {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 50000;
+    transform: translate(-50%, -50%);
+    background-color: green;
+    color: #721c24;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: none;
+}
+</style>
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/apex-charts/apexcharts.js' %}"></script>
+<script src="{% static 'vendor/libs/swiper/swiper.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/css/pages/cards-advance.css' %}" />
+{% endblock page_css %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script src="{% static 'js/dashboards-analytics.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+<div id="customAlert" class="custom-alert"></div>
+<div id="customAlert2" class="custom-alert2"></div>
+
+  <!-- Earning Reports -->
+  <div class="col-lg-12 mb-4">
+    <div class="card h-100">
+      <div class="card-header pb-0 d-flex justify-content-between mb-lg-n4">
+        <div class="card-title mb-0" style="width:100%">
+          <div class="d-flex justify-content-between" >
+            <div>
+               <small class="text-muted">Event</small>
+              <h4 class="mb-0 text-capitalize">{{ event.name }}</h4>
+            </div>
+            <div >
+
+              <button class='btn btn-primary mt-2 mx-2' onclick="genPDF('{{ event.id }}')"><span class="mx-1">Generate Quote</span> <i class="fa fa-file-pdf mx-1" style="color: #ffff00;"></i></button>
+            </div>
+          </div>
+         
+        </div>
+        
+        <!-- </div> -->
+      </div>
+      <div class="card-body mt-5">
+          
+
+
+          <div class="row mb-3">
+              <div class="col-md mb-md-0 mb-2">
+
+                      {% if event.client %}
+                <div class="form-check custom-option custom-option-basic checked p-3">
+                    <span class="custom-option-header mb-2">
+                      <span class="fw-medium text-heading mb-0">{% translate "Event Client" %}</span>
+                    </span>
+                    <span class="custom-option-body">
+                      <span class="d-flex justify-content-between"><span class="fw-bold text-heading mb-0">{{ event.client }}</span><span class="text-heading mb-0 text-primary cursor-pointer">{{ event.client.email }}</span> </span><br>
+                      <small>{{ event.client.get_address }} <br>{% if event.client.mobile %} Mobile : {{ event.client.mobile }}{% endif %} {% if event.client.phone %} {% if not event.client.mobile %}Phone: {% else %} | {% endif %} {{ event.client.phone }}{% endif %}</small>
+                      <span class="my-2 border-bottom d-block"></span>
+                      <span class="d-flex">
+                        <a class="me-2" href="{% url 'clients-edit' event.client.id %}">Edit</a> <a href="{% url 'app-booking-detail-remove' event.id %}">Remove</a>
+                      </span>
+                    </span>
+                </div>
+
+                      
+                    
+                      {% endif %}
+                      
+                      <form method="POST">
+                        {% csrf_token %}
+                        <div class="form-check custom-option custom-option-basic checked p-3 mt-4">
+                           {% if not event.client %}
+                          <span class="custom-option-header mb-2">
+                            <span class="fw-medium text-heading mb-0">{% translate "Event Client" %}</span>
+                          </span>
+                         
+                        {{ form.client }}<br>
+                        {% endif %}
+                        <span class="custom-option-header mb-2">
+                          <span class="fw-medium text-heading mb-0">{% translate "Event Status" %}</span>
+                        </span>
+                        {{ form.status }}
+                        <button type="submit" name="save_all" class="btn btn-primary mt-2">Save</button>
+                        {% if not event.client %}
+                        <a class='btn btn-primary mt-2 mx-2' href="{% url 'event-clients-add' event.id %}">Add A New Client</a>
+                        {% endif %}
+                    </div>
+                      </form>
+
+
+
+
+
+                      
+
+
+
+                      <div class="form-check custom-option custom-option-basic checked p-3 mt-4">
+                    <span class="custom-option-header mb-2">
+                      <span class="fw-medium text-heading mb-0">{% translate "Event Information" %}</span>
+                    </span>
+                    <span class="custom-option-body">
+                      
+
+
+
+
+
+
+
+
+
+
+
+                      <ul class="list-unstyled mb-4 mt-3">
+          <li class="d-flex align-items-center mb-3"><i class="ti ti-settings text-heading"></i><span class="fw-medium mx-2 text-heading">Project Type:</span> <span>{{ event.project_type }}</span></li>
+          <li class="d-flex align-items-center mb-3"><i class="ti ti-calendar text-heading"></i><span class="fw-medium mx-2 text-heading">Event Type:</span> <span>{{ event.event_type }}</span></li>
+          <li class="d-flex align-items-center mb-3"><i class="ti ti-crown text-heading"></i><span class="fw-medium mx-2 text-heading">Manager:</span> <span>{{ event.event_manager }}</span></li>
+        </ul>
+
+        <small class="card-text text-uppercase">Schedule</small>
+        <ul class="list-unstyled mb-4 mt-3">
+          <li class="d-flex align-items-center mb-3"><i class="ti ti-rocket"></i><span class="fw-medium mx-2 text-heading">Event Kickoff:</span> <span>{{ event.start }}</span></li>
+          <li class="d-flex align-items-center mb-3"><i class="ti ti-calendar-check"></i><span class="fw-medium mx-2 text-heading">Event Wrap-up:</span> <span>{{ event.end }}</span></li>
+          <li class="d-flex align-items-center mb-3"><i class="ti ti-sun"></i><span class="fw-medium mx-2 text-heading">All Day:</span> <span>{% if event.all_day %}Full Day{% else %}Part-Day{% endif %}</span></li>
+        </ul>
+
+
+        <small class="card-text text-uppercase">Contact Information</small>
+        <ul class="list-unstyled mb-4 mt-3">
+          <li class="d-flex align-items-center mb-3"><i class="ti ti-phone-call"></i><span class="fw-medium mx-2 text-heading"> Client Contact:</span> <span>{% if event.client.mobile %}{{ event.client.mobile }}{% endif %} {% if event.client.phone %} {% if event.client.mobile %} | {% endif %} {{ event.client.phone }}{% endif %}</span></li>
+          <li class="d-flex align-items-center mb-3"><i class="ti ti-compass"></i><span class="fw-medium mx-2 text-heading">Location:</span> <span>{{ event.location|default:"" }}</span></li>
+          {% if event.url %}<li class="d-flex align-items-center mb-3"><i class="ti ti-link"></i><span class="fw-medium mx-2 text-heading">URL:</span> <span>{{ event.url }}</span></li>{% endif %}
+        </ul>
+        <small class="card-text text-uppercase">Description</small><br>
+        <small class="card-text">{{ event.description }}</small>
+                    </span>
+
+                    
+                    <a class='btn btn-primary mt-2 mx-2 bg-label-success' href="{% url 'scan' event.id %}">Ready To Pack Scan</a>
+
+                   
+                </div>
+
+
+
+              </div>
+
+
+
+
+
+              <div class="col-md">
+                <div class="form-check custom-option custom-option-basic p-3 checked">
+                  
+                    <span class="custom-option-header mb-2">
+                      <span class="fw-medium text-heading mb-0">Quote</span>
+                      {% if event.status != "quote" and event.status != "hold" %}
+                      <a href="{% url "invoice-edit" event.id %}">
+                        <button class='btn btn-primary mt-2 mx-2'><span class="mx-1">Generate Invoice</span> <i class="fa fa-file-pdf mx-1" style="color: #ffff00;"></i></button>
+                      </a>
+                      {% endif %}
+                    </span>
+                    <span class="custom-option-body">     
+
+                      <ul class="list-group mb-3">
+              <form method='post'>
+                {%csrf_token%}
+
+
+              {% if order.get_order_items.all %}
+              <span class="custom-option-header mb-2">
+                <span class="fw-bold text-heading mb-0">{{order}}</span>
+              </span>
+              {% endif %}
+              <ul class="list-group mb-3">
+              {% for item in order.get_order_items %}
+              <li class="list-group-item p-4">
+                <div class="d-flex gap-3">
+                  <div class="flex-shrink-0 d-flex align-items-center">
+                    <img src="{{ item.w_product.product.image.url }}" alt="google home" class="w-px-100">
+                  </div>
+                  <div class="flex-grow-1">
+
+                    <div class="row">
+                      <div class="col-md-8">
+                        <p class="me-3"><a href="javascript:void(0)" class="text-body"> {{item.w_product.product.name}} </a></p>
+                        <div class="text-muted mb-2 d-flex flex-wrap"><span class="me-1">Brand:</span> <a href="javascript:void(0)" class="me-3">{{item.w_product.product.manufacturer}}</a> 
+                           
+                          {% if item.check_item_availability %}
+                          <span class="badge bg-label-success"> in stock </span>
+                          {% else %}
+                          <span class="badge bg-label-danger"> out of stock </span>
+
+
+                          {% getin_warehouse item.w_product.product order.primary_warehouse as inn %}
+                          <button type="button" name="submitButton" id="addproductbtn1" class="btn btn-primary waves-effect waves-light mx-3" data-bs-toggle="modal" onclick="makemodal('{{ item.w_product.product.id }}','{{ inn }}','{{ item.quantity }}')" data-bs-target="#animationModal">{% trans "Request Transfer" %}</button>
+                          {% endif %}
+                        </div>
+                        <div class="read-only-ratings mb-3" data-rateyo-read-only="true"></div>
+                        <input type="hidden" name="item_ids" value="{{ item.id }}">
+                        <input name='quantities' type="number" class="form-control form-control-sm w-px-100 mt-2" value="{{item.quantity}}" min="0">
+                      </div>
+                      <div class="col-md-4">
+                        <div class="text-md-end">
+                          <button type="button" class="btn-close btn-pinned" aria-label="Close"></button>
+                          <div class="my-2 my-md-4 mb-md-5"><span class="text-primary">${{item.get_price}}/</span><s class="text-muted">${{item.get_price}}</s></div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </li>
+              {% endfor %}
+              {% if order.items.all.count == 0 or not order %}
+              <li class="list-group-item p-4">
+                <p class="fs-6">A quote for this event is currently pending. In order to proceed, click the button below to add the required products for the event.</p>
+                <div class="row text-center"><a class='mt-2 mx-2' href="{% url 'event-product-list' event.id %}"><button class="btn btn-primary">Make Quote</button></a></div>
+              </li>
+              {% else %}
+              <li class="list-group-item p-4">
+                <div hidden>{{ form.status }}</div>
+              <button type='submit' class='btn btn-primary mt-2 mx-2' href="{% url 'event-product-list' event.id %}" >Save</button>
+              </li>
+              {% endif %}
+            </ul>
+              
+              
+            </form>
+             
+            <div class="d-flex mt-3">
+
+            {% if order.items.all.count != 0 and order %}
+            <a class='mt-2 mx-2' href="{% url 'event-product-list' event.id %}"><button class="btn btn-primary">Edit Quote</button></a>
+            {% endif %}
+            {% if order.status != "quote" and order %}
+            <a class='mt-2 mx-2' href="{% url 'scan' event.id %}"><button class="btn btn-primary">Pack Scan</button></a>
+            {% endif %}
+            </div>  
+                    </span>
+                </div>
+
+              </div>
+            </div>
+
+
+      </div>
+    </div>
+  </div>
+  <!--/ Earning Reports -->
+
+  
+  <div class="modal fade animate__animated fadeIn" id="animationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modaltitle"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="nameAnimation" class="form-label">{% translate "Products" %}</label>
+              <select name="product" id="select2Basic" class="form-select select2" required>
+                  {% getproducts as gottenp %}
+                  {% for product in gottenp %}
+                  <option value="{{ product.id }}">{{ product.name }}</option>
+                  {% endfor %}           
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="nameAnimation" class="form-label">{% translate "Quantity" %}</label>
+              <input id="modalq" name="quantity" class="form-control" />
+            </div>
+
+            
+            <div class="col-md-6 mb-3">
+              <label for="nameAnimation" class="form-label">{% translate "From" %}</label>
+              <select id="fwarehouse" name="ware_id" class="selectpicker w-100 form-control" data-style="btn-default" required>
+                {% for warehouse in warehouses %}
+                  {% if warehouse.id  != order.primary_warehouse.id %}
+                <option value="{{warehouse.id}}">{{warehouse.name}}</option>
+                {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="nameAnimation" class="form-label">{% translate "To" %}</label>
+              <select id="twarehouse" name="fro_id" class="form-control selectpicker w-100" data-style="btn-default" required>
+                <option value="{{ order.primary_warehouse.id }}">{{ order.primary_warehouse.name }}</option>     
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="closebtn2" type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="button" id="force_submit_btn" onclick="maketrans()" class="btn btn-primary">{% trans "Request Transfer" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    function showErrorAlert(message) {
+      var alertDiv = document.getElementById("customAlert");
+      alertDiv.textContent = message;
+      alertDiv.style.display = "block";
+      
+      // Hide the alert after 5 seconds
+      setTimeout(function() {
+          alertDiv.style.display = "none";
+      }, 5000);
+    }
+    
+    function showSuccessAlert(message) {
+      var alertDiv = document.getElementById("customAlert2");
+      alertDiv.textContent = message;
+      alertDiv.style.display = "block";
+      
+      // Hide the alert after 5 seconds
+      setTimeout(function() {
+          alertDiv.style.display = "none";
+      }, 5000);
+    }
+
+    function maketrans(){
+      inner = document.getElementById('force_submit_btn').innerHTML;
+      document.getElementById('force_submit_btn').innerHTML = "Loading";
+      document.getElementById('force_submit_btn').disabled=true;
+      var count = document.getElementById("modalq").value;
+      var p_id = document.getElementById("select2Basic").value;
+      var fro_id = document.getElementById("fwarehouse").value;
+      var to_id = document.getElementById("twarehouse").value;
+      if(count ==""){
+        count =1;
+      }
+      $.ajax({
+        type: 'POST',
+        url: '{% url "transfer-request-multiple" %}',
+        data: {
+          'product_id': p_id,
+          'fro': fro_id,
+          'to': to_id,
+          'quantity': count
+        },
+        success: function(response) {
+          if(response.error){
+            showErrorAlert(response.error);
+          }else{
+            showSuccessAlert(response.message);
+            var closeButton = document.getElementById("closebtn2");
+            closeButton.click();
+          }
+    
+        },
+        error: function(error) {
+            showErrorAlert('Your request contains errors');
+        },
+        complete: function() {
+            document.getElementById('force_submit_btn').innerHTML = inner;
+            document.getElementById('force_submit_btn').disabled=false;
+        }
+      });
+    }
+
+
+
+
+  
+
+    function makemodal(productId, inn, quantity){
+      var count=1;
+      if(inn<quantity){
+        count = quantity - inn
+      }
+     document.getElementById("select2Basic").value= productId;
+     document.getElementById("modalq").value= count;
+    }
+  </script>
+
+
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+ {% autoescape off %}
+
+  <script type="text/javascript">
+    
+  </script>
+ {% endautoescape %}
+<script>
+
+  function noresfunc(){
+    document.getElementsByClassName("select2-results__message")[0].innerHTML ="<button class='btn btn-primary' onclick='addnew()'  data-bs-toggle='modal' data-bs-target='#modalCenter'>Add A New Client</button>";
+    console.log("type")
+  }
+
+
+ 
+
+  $(document).ready(function() {
+      // Add event listener for the input event on the input field
+      $('.cdiv').on('input','input', function() {
+        // Get the typed value
+        var inputValue = $(this).val();
+
+        // Call your function or perform actions based on the typed value
+        console.log('Typed value:', inputValue);
+
+        noresfunc();
+      });
+    });
+
+
+
+function getCookie(name) {
+var cookieValue = null;
+if (document.cookie && document.cookie !== '') {
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+        var cookie = jQuery.trim(cookies[i]);
+        // Does this cookie string begin with the name we want?
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+        }
+    }
+}
+return cookieValue;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function genPDF( id) {
+    // Data to be sent in the request
+  csrf_token = getCookie('csrftoken');
+    const requestData = {
+        _csrf: csrf_token,
+        id: id
+        // Add more data as needed
+    };
+
+    // Convert data to form-urlencoded format
+    const formData = new URLSearchParams();
+    for (const key in requestData) {
+        formData.append(key, requestData[key]);
+    }
+
+    // URL to send the request
+    const url = "{% url 'event-gen-quote' %}";
+
+    // Fetch options
+    const options = {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    };
+
+    // Send the request
+    fetch(url, options)
+        .then(response => response.blob())
+        .then(blob => {
+            // Create a URL for the blob
+            const url = window.URL.createObjectURL(blob);
+
+            // Create a link element
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'downloaded_file.pdf'; // Specify the filename for download
+            document.body.appendChild(link);
+
+            // Trigger the click event on the link to start the download
+            link.click();
+
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(link);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+</script>
+
+{% endblock content %}

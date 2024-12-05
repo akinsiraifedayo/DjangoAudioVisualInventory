@@ -1,0 +1,735 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+{% load booking_tags %}
+
+{% block title %}Companies{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+<style>
+  .added-to-cart {
+      background-color: #3F8B4F;
+  }
+  #cart-items tr td{
+    color: #fff;
+  }
+  .checkbtn{
+    border-radius: 4px !important;
+    display: none;
+  }
+  .other-warehouse {
+    background-color: rgba(250,150,150,0.4) !important;
+  }
+  .custom-alert {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      z-index: 50000;
+      transform: translate(-50%, -50%);
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 10px 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      display: none;
+  }
+
+  .custom-alert2 {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 50000;
+    transform: translate(-50%, -50%);
+    background-color: green;
+    color: #721c24;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: none;
+}
+</style>
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script src="{% static 'js/products-list.js' %}"></script>
+<script src="{% static 'js/products-delete.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+<div id="customAlert" class="custom-alert"></div>
+<div id="customAlert2" class="custom-alert2"></div>
+
+<!-- Warehouses Toast -->
+{% if messages %}
+<div class="toast-container end-0 m-1 me-4">
+  {% for message in messages %}
+  <div class="toast {% if message.tags == 'success' %}bg-success{% elif message.tags == 'error' %}bg-danger{% else %}bg-warning{% endif %}" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="true" data-bs-delay="2000">
+    <div class="toast-body text-center text-white fw-medium">
+      {{ message }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+<!--/ Warehouses Toast -->
+
+<!-- Warehouses Table -->
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{{ event.name }} /</span> {% translate "Create" %} {% translate "Quote" %}
+</h4>
+<!-- permission required: view_transaction -->
+{% if request.user|has_permission:"clients.view_client"%}
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <div class="d-flex align-items-end">
+              <h3 class="mb-0 me-2">{{ allproduct_count }}</h3>
+              <small class="text-primary"></small>
+            </div>
+            <small>Total Product</small>
+          </div>
+          <span class="badge bg-label-primary rounded p-2">
+            <i class="ti ti-arrows-transfer-down ti-sm"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+<div class="card">
+  <div class="card-datatable table-responsive" style="overflow-x: unset;">
+    <table id="products-table" class="datatables-products table">
+      <div class="col-lg-6 mx-2 card-header">
+        <label for="select2Basic" class="form-label">Select Primary Warehouse</label>
+        <select id="select2Basic" class="select2 form-select form-select-lg" data-allow-clear="true" onchange="refilter(this.value)">
+          <option value="" {% if selected_company_id == None %} selected {% endif %}>- - -</option>
+          {% for warehouse in warehouses %}
+              <option value="{{ warehouse.id }}" {% if warehouse.slug == selected_warehouse_slug %} selected {% endif %}>{{ warehouse.name }}</option>
+          {% endfor %}
+      </select>
+      </div>
+      {% if warehouse == None %}
+      <thead><tr><th class="text-center my-5">Please Select Primary Warehouse to load Products</th></tr></thead>
+      {% else %}
+      <thead class="border-top">
+        <tr class="text-nowrap">
+          <th>Id</th>
+          <th>Image</th>
+          <th>Name</th>
+          <th>Manufacturer</th>
+          <th>QTY (in)</th>
+          <th>QTY (out)</th>
+          <th class="text-center">{% translate "Quote QTY" %}</th>
+          <th>{% translate "actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in inproducts %}
+        
+        <tr class="product-item" id="product-row-{{ product.id }}">
+            <td>{{ forloop.counter}}</td>
+            <td><img src="{{ product.image.url }}" class="product-image-small"> <span class="fw-medium">{{ product.barcode }}</span></td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.manufacturer }}</td>
+            <td class="text-center">
+             {% getin_warehouse product warehouse as gotten %}
+              {% if gotten > 0 %}
+              <span class="badge bg-label-primary me-1">{{ gotten }}</span>
+              {% else %}
+              <span class="badge bg-label-danger   me-1">{{ gotten }}</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% getout_warehouse product warehouse as gotten %}
+              {% if gotten > 0 %}
+              <span class="badge bg-label-primary me-1">{{ gotten }}</span>
+              {% else %}
+              <span class="badge bg-label-danger   me-1">{{ gotten }}</span>
+              {% endif %}
+            </td>
+            <td>
+                <div class="number-spinner">
+                    <div class="input-group">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default btn-spinner-minus" data-dir="dwn" onclick="decrementQuantity('{{ product.id }}')">-</button>
+                        </span>
+                        <input type="text" class="form-control text-center" value="0" onchange="showtick('{{ forloop.counter }}')" name="product_quantity" id="quantity-{{ product.id }}">
+                        <input type="text" id="current-{{ product.id }}" value="0" hidden>
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default btn-spinner-plus" data-dir="up" onclick="incrementQuantity('{{ product.id }}')">+</button>
+                        </span>
+                        <div style="width: 27px; display: flex;">
+                        <button style="width: 100%; height: 100%;" class="btn-success checkbtn me-1" onclick="addToCart('{{ product.id }}', '{{ order.id }}')" id="save{{ product.id }}"><i class="fa fa-check"></i></button>
+                      </div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="dropdown">
+                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{% url 'Product:product-edit' product.id %}"><i class="ti ti-pencil me-1"></i> Edit</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+
+        {% for product in outproducts %}
+        <tr class="product-item other-warehouse" id="product-row-{{ product.id }}">
+            <td>{% getcount forloop.counter inproducts %}</td>
+            <td><img src="{{ product.product.image.url }}" class="product-image-small"> <span class="fw-medium">{{ product.barcode }}</span></td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.manufacturer }}</td>
+            <td class="text-center">
+              {% getin_warehouse product warehouse as gotten %}
+              {% if gotten > 0 %}
+              <span class="badge bg-label-primary me-1">{{ gotten }}</span>
+              {% else %}
+              <span class="badge bg-label-danger   me-1">{{ gotten }}</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% getout_warehouse product warehouse as gotten %}
+              {% if gotten > 0 %}
+              <span class="badge bg-label-primary me-1">{{ gotten }}</span>
+              {% else %}
+              <span class="badge bg-label-danger   me-1">{{ gotten }}</span>
+              {% endif %}
+            </td>
+            <td>
+                <div class="number-spinner">
+                    <div class="input-group">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default btn-spinner-minus" data-dir="dwn" onclick="decrementQuantity('{{ product.id }}')">-</button>
+                        </span>
+                        <input type="text" class="form-control text-center" value="0" onchange="showtick('{{ product.id }}')" name="product_quantity" id="quantity-{{ product.id }}">
+                        <input type="text" id="current-{{ product.id }}" value="0" hidden>
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default btn-spinner-plus" data-dir="up" onclick="incrementQuantity('{{ product.id }}')">+</button>
+                        </span>
+                        <div style="width: 27px; display: flex;">
+                          <button style="width: 100%; height: 100%;" class="btn-success checkbtn me-1" onclick="addToCart('{{ product.id }}', '{{ order.id }}')" id="save{{ product.id }}"><i class="fa fa-check"></i></button>
+                      </div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="dropdown">
+                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{% url 'Product:product-edit' product.id %}"><i class="ti ti-pencil me-1"></i> Edit</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    {% endif %}
+    </table>
+    {% if warehouse != None %}
+
+    <div class="row g-4 mb-4">
+      <div class="col-sm-6 col-xl-3">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-start justify-content-between">
+              <div class="content-left">
+                <div class="d-flex align-items-end">
+                  <h3 class="mb-0 me-2" id="addedcount">{{ product_count }}</h3>
+                  <small class="text-primary"></small>
+                </div>
+                <small>Added Products</small>
+                  <input id="product_count" type="number" hidden/>
+                  <!-- Your form fields here -->
+                  <br><br>
+                  <a href="{{ order.change_to_hold }}"><button class='btn btn-primary' id="submit-cart-button">Change to Hold</button></a>
+              
+                
+              </div>
+              <span class="badge bg-label-primary rounded p-2">
+                <i class="ti ti-arrows-transfer-down ti-sm"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+    </div>
+
+
+    <table class="table">
+      <thead>
+          <tr>
+              <th>ID</th>
+              <th>Image</th>
+              <th>Name</th>
+              <th>Manufacturer</th>
+              <th>QTY (in)</th>
+              <th>QTY (out)</th>
+              <th class="text-center">Quote QTY</th>
+              <th class="text-center">Action</th>
+          </tr>
+      </thead>
+      <tbody id="cart-items">
+        {% if not selected_items %}
+        <tr id="norow"><td colspan="8" class="text-center"><span class="text-muted" style="letter-spacing: 2px; word-spacing: 5px;"> No Product added yet</span> </td></tr>
+        {% endif %}
+        {% for product in selected_items %}
+        {% getin_warehouse product.w_product.product warehouse as gotten %}
+        <tr class="product-item {% if gotten <= 0 %}other-warehouse{% endif %}" id="product-row-{{ product.w_product.product.id }}">
+            <td>{{ forloop.counter}}</td>
+            <td><img src="{{ product.w_product.product.image.url }}" class="product-image-small"> <span class="fw-medium">{{ product.barcode }}</span></td>
+            <td>{{ product.w_product.product.name }}</td>
+            <td>{{ product.w_product.product.manufacturer }}</td>
+            <td class="text-center">
+              {% if gotten > 0 %}
+              <span class="badge bg-label-primary me-1">{{ gotten }}</span>
+              {% else %}
+              <span class="badge bg-label-danger   me-1">{{ gotten }}</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% getout_warehouse product.w_product.product warehouse as gotten %}
+              {% if gotten > 0 %}
+              <span class="badge bg-label-primary me-1">{{ gotten }}</span>
+              {% else %}
+              <span class="badge bg-label-danger   me-1">{{ gotten }}</span>
+              {% endif %}
+            </td>
+            <td>
+                <div class="number-spinner">
+                    <div class="input-group">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default btn-spinner-minus" data-dir="dwn" onclick="decrementQuantity('{{ product.w_product.product.id }}')">-</button>
+                        </span>
+                        <input type="text" class="form-control text-center" value="{{ product.quantity }}" onchange="showtick('{{ forloop.counter }}')" name="product_quantity" id="quantity-{{ product.w_product.product.id }}">
+                        <input type="text" id="current-{{ product.w_product.product.id }}" value="0" hidden>
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default btn-spinner-plus" data-dir="up" onclick="incrementQuantity('{{ product.w_product.product.id }}')">+</button>
+                        </span>
+                        <div style="width: 27px; display: flex;">
+                        <button style="width: 100%; height: 100%;" class="btn-success checkbtn me-1" onclick="edit('{{ product.w_product.product.id }}', '{{ order.id }}')" id="save{{ product.w_product.product.id }}"><i class="fa fa-check"></i></button>
+                      </div>
+                    </div>
+                </div>
+            </td>
+            <td><a href="{{ product.get_remove_url }}"><button class="btn btn-danger">Remove</button></a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+  </table>
+
+  {% endif %}
+
+    <div class="modal fade" id="modalCenter" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalCenterTitle">Modal title</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row g-2">
+                <div class="col mb-0 text-center">
+                  <span class="text-danger h5">Are you sure you want to delete?</span><br/>
+                  <span class="text-muted">This will remove product from all warehouses</span>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">No</button>
+              <div id="delbtndiv"><button type="button" id="delbtn" class="btn btn-primary">Yes</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+  </div>
+</div>
+{% endif %}
+
+<div id="formContainer" style="display: none;">
+
+</div>
+<!--/ Warehouses Table -->
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% autoescape off %}
+<script type="text/javascript">
+  function showErrorAlert(message) {
+    var alertDiv = document.getElementById("customAlert");
+    alertDiv.textContent = message;
+    alertDiv.style.display = "block";
+    
+    // Hide the alert after 5 seconds
+    setTimeout(function() {
+        alertDiv.style.display = "none";
+    }, 5000);
+  }
+  
+  function showSuccessAlert(message) {
+    var alertDiv = document.getElementById("customAlert2");
+    alertDiv.textContent = message;
+    alertDiv.style.display = "block";
+    
+    // Hide the alert after 5 seconds
+    setTimeout(function() {
+        alertDiv.style.display = "none";
+    }, 5000);
+  }
+
+  
+var addWarehouseBtn = '{% if request.user|has_permission:"companies.add_client" %}' + true + '{% endif %}';
+
+
+    function makedelete(title, url){
+      document.getElementById("modalCenterTitle").innerHTML= title;
+      document.getElementById("delbtndiv").innerHTML= `<button type="button" id="delbtn" onclick="deleteproduct('${url}')" class="btn btn-primary">Yes</button>`;
+    }
+  
+  
+    function refilter(warehouse){
+      url = '{% url "event-product-list" event.id %}';
+      if(warehouse == "ALL" || warehouse == ""){
+        window.location.href = url;
+      }else{
+        window.location.href = url+warehouse+'/';
+      }
+    }
+    if("{{ warehouse }}" != "None"){
+      document.getElementById('select2Basic').value="{{ warehouse.id }}";
+    }
+  
+   function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+  
+  
+    function deleteproduct(url){
+            var csrftoken = getCookie('csrftoken');
+            $.ajax(url, {
+                      type: "GET",
+                        timeout: 50000,
+                        success: function(data,status, xhr){
+                        if(data == 'success'){
+                          window.location.reload();
+                        }
+                    },
+                    });
+          }
+
+          
+var addedProducts = {};
+
+function incrementQuantity(productId) {
+    var quantityInput = document.getElementById('quantity-' + productId);
+    var currentInput = document.getElementById('current-' + productId);
+    var clonedRowInput = document.getElementById('cloned-quantity-' + productId);
+
+    var currentQuantity = parseInt(quantityInput.value);
+    quantityInput.value = currentQuantity + 1;
+    if(clonedRowInput != undefined){
+      clonedRowInput.value = currentQuantity + 1;
+    }
+    makeid = "save"+productId
+    if( quantityInput.value != currentInput.value){
+      document.getElementById(makeid).style.display = "block";
+    }else{
+      document.getElementById(makeid).style.display = "none";
+    }
+    
+}
+
+function decrementQuantity(productId) {
+    var quantityInput = document.getElementById('quantity-' + productId);
+    var currentInput = document.getElementById('current-' + productId);
+    var clonedRowInput = document.getElementById('cloned-quantity-' + productId);
+
+    var currentQuantity = parseInt(quantityInput.value);
+    if (currentQuantity > 0) {
+        quantityInput.value = currentQuantity - 1;
+        if(clonedRowInput != undefined){
+      clonedRowInput.value = currentQuantity - 1;
+    }
+    makeid = "save"+productId
+    if( quantityInput.value != currentInput.value){
+      document.getElementById(makeid).style.display = "block";
+    }else{
+      document.getElementById(makeid).style.display = "none";
+    }
+    }
+}
+
+function deleteitem(productId) {
+  rows = document.getElementsByClassName("added-to-cart");
+  clonedRow2 = undefined
+  madeid = "product-row-"+productId;
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].id === madeid) {
+        clonedRow2 = rows[i];
+        break;  
+    }
+}
+  var cartItems = document.getElementById('cart-items');
+    cartItems.removeChild(clonedRow2);
+    delete addedProducts[productId];
+    // Get the main row corresponding to the cloned row and reset the color
+    var mainRow = document.getElementById('product-row-' + productId);
+    mainRow.style.backgroundColor = '';
+}
+
+
+function createrow(id,image, name, manufacturer, inn, out, quantity, myurl){
+  document.getElementById("norow").remove();
+  if(inn == 0){
+    inclass = "danger";
+  }else{
+    inclass = "primary";
+  }
+  if(out == 0){
+    outclass = "danger";
+  }else{
+    outclass = "primary";
+  }
+  if(inn==0){
+    innclass = "other-warehouse";
+  }
+  else{
+    innclass="";
+  }
+  element = `<tr class="product-item ${innclass}" id="product-row-{{ forloop.counter }}">
+    <td class="text-success">New*</td>
+    <td><img src="${image}" class="product-image-small"> <span class="fw-medium">{{ product.barcode }}</span></td>
+    <td>${name}</td>
+    <td>${manufacturer}</td>
+    <td class="text-center">
+      <span class="badge bg-label-${inclass} me-1">${inn}</span>
+    </td>
+    <td class="text-center">
+      <span class="badge bg-label-${outclass} me-1">${out}</span>
+    </td>
+    <td>
+        <div class="number-spinner">
+            <div class="input-group">
+                <span class="input-group-btn">
+                    <button type="button" class="btn btn-default btn-spinner-minus" data-dir="dwn" onclick="decrementQuantity('{{ product.id }}')">-</button>
+                </span>
+                <input type="text" class="form-control text-center" value="${quantity}" onchange="showtick('{{ forloop.counter }}')" name="product_quantity" id="quantity-{{ product.id }}">
+                <input type="text" id="current-{{ product.id }}" value="0" hidden>
+                <span class="input-group-btn">
+                    <button type="button" class="btn btn-default btn-spinner-plus" data-dir="up" onclick="incrementQuantity('{{ product.id }}')">+</button>
+                </span>
+                <div style="width: 27px; display: flex;">
+                <button style="width: 100%; height: 100%;" class="btn-success checkbtn me-1" onclick="edit('${id}', '{{ order.id }}" id="save{{ product.id }}"><i class="fa fa-check"></i></button>
+              </div>
+            </div>
+        </div>
+    </td>
+    <td><a href="${myurl}"><button class="btn btn-danger">Remove</button></a></td>
+</tr>`
+
+document.getElementById("cart-items").innerHTML+=element;
+let currentCountString = document.getElementById("addedcount").textContent;
+let currentCount = parseInt(currentCountString);
+currentCount++;
+document.getElementById("addedcount").textContent = currentCount;
+}
+
+function editrow(id, count){
+  document.getElementById(`quantity-${id}`).value=count;
+  document.getElementById(`save${id}`).style.display="none";
+}
+
+function edit(productId, orderId) {
+  var count = document.getElementById(`quantity-${productId}`).value;
+  $.ajax({
+    type: 'POST',
+    url: '{% url "add-item-to-quote" %}',
+    data: {
+      'product_id': productId,
+      'order_id': orderId,
+      'count': count
+    },
+    success: function(response) {
+      if(response.error){
+        showErrorAlert(response.error)
+      }
+      if(response.data){
+        showSuccessAlert(response.message);
+        editrow(response.data.id, response.data.quantity);
+      }
+        
+    },
+    error: function(error) {
+        showErrorAlert('Your request contains errors');
+    }
+  });
+}
+
+
+function addToCart(productId, orderId) {
+  var count = document.getElementById(`quantity-${productId}`).value;
+  $.ajax({
+    type: 'POST',
+    url: '{% url "add-item-to-quote" %}',
+    data: {
+      'product_id': productId,
+      'order_id': orderId,
+      'count': count
+    },
+    success: function(response) {
+      if(response.error){
+        showErrorAlert(response.error)
+      }
+      if(response.data){
+        showSuccessAlert(response.message);
+        const myrow = document.getElementById(`product-row-${productId}`)
+        if(myrow){
+          myrow.remove();
+        }
+        createrow(response.data.id, response.data.image, response.data.name, response.data.manufacturer, response.data.inn, response.data.out, response.data.quantity, response.data.remove);
+      }
+        
+    },
+    error: function(error) {
+        showErrorAlert('Your request contains errors');
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+
+  var allQuantityInputs = document.querySelectorAll('.form-control.text-center');
+
+    allQuantityInputs.forEach(function(input) {
+        input.addEventListener('input', function(event) {
+            var changedValue = parseInt(input.value);
+            var productId = input.dataset.productId;
+
+            // Get the corresponding input box in the main row
+            var mainRowInput = document.querySelector('#quantity-' + productId);
+
+            // Get the corresponding input box in the cloned row
+            var clonedRowInput = document.querySelector('#cloned-quantity-' + productId);
+
+            // Update the value of both input boxes
+            if (mainRowInput) {
+                mainRowInput.value = changedValue;
+            }
+            if (clonedRowInput) {
+                clonedRowInput.value = changedValue;
+            }
+        });
+    });
+
+  });
+
+  // Function to submit the items in the cart
+function submitCartItems() {
+    const form = document.createElement('form');
+    form.id = 'myForm';
+    form.action = '';
+    form.method = 'post';
+
+    const jsonDataInput = document.createElement('input');
+    jsonDataInput.type = 'hidden';
+    jsonDataInput.name = 'jsonData';
+    jsonDataInput.value = JSON.stringify(addedProducts);
+    const submitButton = document.createElement('button');
+    submitButton.type = 'submit';
+    submitButton.textContent = 'Submit';
+
+    const csrfTokenInput = document.createElement('input');
+    csrfTokenInput.type = 'hidden';
+    csrfTokenInput.name = 'csrfmiddlewaretoken';
+    csrfTokenInput.value = getCookie("csrftoken");
+
+    form.appendChild(jsonDataInput);
+    form.appendChild(csrfTokenInput);
+    form.appendChild(submitButton);
+    const formContainer = document.getElementById('formContainer');
+    formContainer.appendChild(form);
+      form.submit();
+}
+
+
+// Get the CSRF token from the cookie
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Check if the cookie name matches the CSRF token name
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Include the CSRF token in AJAX requests
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+        }
+    }
+});
+
+
+
+$(document).ready(function() {
+  // Initialize DataTable
+  $('#products-table').DataTable();
+  
+});
+
+</script>
+
+{% endautoescape %}
+
+
+
+
+{% endblock %}

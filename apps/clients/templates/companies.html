@@ -1,0 +1,131 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Companies{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/companies-list.js' %}"></script>
+<script src="{% static 'js/companies-delete.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+
+
+<!-- Warehouses Toast -->
+{% if messages %}
+<div class="toast-container end-0 m-1 me-4">
+  {% for message in messages %}
+  <div class="toast {% if message.tags == 'success' %}bg-success{% elif message.tags == 'error' %}bg-danger{% else %}bg-warning{% endif %}" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="true" data-bs-delay="2000">
+    <div class="toast-body text-center text-white fw-medium">
+      {{ message }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+<!--/ Warehouses Toast -->
+
+<!-- Warehouses Table -->
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{% translate "Companies" %} /</span> {% translate "All Companies" %} {% translate "List" %}
+</h4>
+<!-- permission required: view_transaction -->
+{% if request.user|has_permission:"company.view_company"%}
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <div class="d-flex align-items-end">
+              <h3 class="mb-0 me-2">{{ company_count }}</h3>
+              <small class="text-primary"></small>
+            </div>
+            <small>Total Companies</small>
+          </div>
+          <span class="badge bg-label-primary rounded p-2">
+            <i class="ti ti-arrows-transfer-down ti-sm"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<div class="card">
+  <div class="card-datatable table-responsive" style="overflow-x: unset;">
+    <table class="datatables-transaction table">
+      <thead class="border-top">
+        <tr class="text-nowrap">
+          <th></th>
+          <th>Id</th>
+          <th>Name</th>
+          <th>Postal</th>
+          <th>State</th>
+          <th>Country</th>
+          <th>Number of Clients</th>
+          <th>{% translate "actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for company in companies %}
+        <tr>
+          <td></td>
+          <td>{{ company.id }}</td>
+          <td class="text-nowrap fw-medium text-heading">{{ company.name|capfirst }}</td>
+          <td class="text-nowrap">{{ company.postal }}</td>
+          <td class="text-nowrap">{{ company.state | default:"" }}</td>
+          <td class="text-nowrap">{{ company.country | default:"" }}</td>
+          <td class="text-nowrap">{{ company.clients.count | default:0 }}</td>
+          <td>
+            <div class="dropdown">
+              <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+              <div class="dropdown-menu">
+                {% if request.user|has_permission:"companies.view_company" %}
+                <a class="dropdown-item" href="{% url 'clientsfil' company.id %}"><i class="ti ti-eye me-1"></i> View Clients</a>
+                {% endif %}
+                {% if request.user|has_permission:"companies.edit_company" %}
+                <a class="dropdown-item" href="{% url 'companies-update' company.id %}"><i class="ti ti-pencil me-1"></i> Edit</a>
+                {% endif %}
+                <!-- permission required: delete_w_product -->
+                {% if request.user|has_permission:"companies.delete_company" %}
+                <a  class="dropdown-item delete-transaction" href="{% url 'companies-delete' company.id %}"  data-transaction-username="{{ company.name|capfirst }}"><i class="ti ti-trash me-1"></i> Delete</a>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+<!--/ Warehouses Table -->
+<script>
+var addWarehouseBtn = '{% if request.user|has_permission:"companies.add_company" %}' + true + '{% endif %}';
+
+</script>
+
+
+{% endblock %}

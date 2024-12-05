@@ -1,0 +1,313 @@
+{% extends layout_path %}
+{% load warehouse_tags %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Warehouses{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/@form-validation/umd/styles/index.min.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-select/bootstrap-select.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/bootstrap-select/bootstrap-select.js' %}"></script>
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/bundle/popular.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script src="{% static 'js/warehouses-add-update.js' %}"></script>
+<script src="{% static 'js/warehouses-delete.js' %}"></script>
+<script src="{% static 'js/modal-enable-otp.js' %}"></script>
+<script src="{% static 'js/stock-delete.js' %}"></script>
+<script src="{% static 'js/cards-actions.js' %}"></script>
+<script src="{% static 'js/ui-popover.js' %}"></script>
+<script src="{% static 'js/form-input-group.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+<style type="text/css">
+  .bardot{
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(170%, -150%) scale(0.7);
+  }
+  .dot-container{
+    position: relative;
+    display: inline-block;
+  }
+</style>
+
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{% trans "Stocks" %} /</span> {% trans "Modify" %} {% trans warehouse.name %} | {{ product.product.name }} Items
+</h4>
+
+<!-- Update Warehouses Form -->
+<div class="card">
+  <div class="card-body">
+    {% if product.product.item_type == "barcoded" %}
+    <button type="button" name="submitButton" class="btn btn-primary waves-effect waves-light mx-3" data-bs-toggle="modal" data-bs-target="#animationModal">{% trans "Add" %} {% trans "New" %} {% trans "Item" %}</button>
+    {% endif %}
+    <form method="POST" id="myForm2">
+        {% csrf_token %}
+      <div class="modal fade animate__animated fadeIn" id="animationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modaltitle"></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="nameAnimation" class="form-label">Barcode</label>
+                  <input type="text" id="barcode" name="barcode" class="form-control" placeholder="Enter Barcode" required>
+                  <div style="height: 10px;">
+                  <span class="text-danger" id="barerror" ></span>
+                </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="nameAnimation" class="form-label">{% translate "status" %}</label>
+                  <select id="selectpickerBasic" name="status" class="selectpicker w-100" data-style="btn-default" required>
+              <option value="available">Available</option>
+              <option value="damaged">Damaged</option>
+              <option value="reserved">Reserved</option>
+            </select>
+                </div>
+
+
+                <div class="col-md-6 mb-3">
+                  <div class="input-group">
+                    <span class="input-group-text" id="basic-addon11">{% trans "Purchase" %} {% trans "Price" %}</span>
+                    <input type="number" id="barcode" name="price"  class="form-control" placeholder="Enter Item(s) Purchase Price" required>  
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="input-group">
+                    <span class="input-group-text" id="basic-addon11">{% trans "Purchase" %} {% trans "Date" %}</span>
+                      <input type="date"  id="barcode" name="date" class="form-control"  placeholder="Enter Item(s) Purchase Date" required>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+              <button  class="btn btn-primary" id="rsavebtn">{% trans "Save" %} {% trans "changes" %}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </form>
+    <div class="row">
+      {% for item in product.items.all %}
+      <div class="col-md-6 p-4">
+      <div class="card card-action mb-4">
+      <div class="card-header collapsed">
+        <div class="card-action-title"><span class="badge  bg-label-info" data-bs-toggle="tooltip" data-bs-placement="top" title="{% if product.product.item_type == "barcoded" %}Item Barcode{% else %}Item Count{% endif %}">{% if product.product.item_type == "barcoded" %}{{ item.barcode }}{% else %}{{ item.count }}{% endif %}<span class="dot-container"><span class="bardot badge badge-dot {% if item.status == 'available' %}bg-success{% elif item.status == 'reserved' %}bg-warning{% elif item.status == 'damaged' %}bg-danger{% endif %} me-1"></span></span></span></div>
+        <div class="card-action-element">
+          <ul class="list-inline mb-0">
+            <li class="list-inline-item">
+              <a href="javascript:void(0);" class="card-collapsible"><small class="text-light fw-medium align-middle">Edit</small><i class="align-middle text-light tf-icons ti ti-chevron-right scaleX-n1-rtl ti-sm"></i></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="collapse">
+        <div class="card-body">
+         <form class="myForm" method="POST">
+           {% csrf_token %}
+           <input type="text" name="id" value="{{ item.id }}" hidden>
+           <div class="row">
+            <div class="col-md-6 px-2">
+              <div class="input-group">
+                <span class="input-group-text" id="basic-addon11">{% if product.product.item_type == "barcoded" %}{% trans "barcode" %}{% else %}{% trans "item" %} {% trans "count" %}  {% endif %}</span>
+                {% if product.product.item_type == "barcoded" %}
+                <input type="text" class="form-control" placeholder="Barcode" name="barcode" value="{{ item.barcode }}" aria-label="Username" aria-describedby="basic-addon11" />
+                {% else %}
+                <input type="number" class="form-control" placeholder="Item Count" name="count" value="{{ item.count }}" aria-label="Username" aria-describedby="basic-addon11" />
+                {% endif %}
+              </div>
+              <div style="height: 10px;">
+                  <span class="text-danger" id="barerror{{ item.id }}" ></span>
+                </div>
+            </div>
+            <div class="col-md-6 px-2">
+              <div class="input-group">
+                <span class="input-group-text" id="basic-addon11">{% trans "status" %}</span>
+                <select name="status"  class="left-straight form-select form-select-lg" data-allow-clear="false">
+              <option value="available" {% if item.status == 'available' %}selected{% endif %}>available</option>
+              <option value="damaged" {% if item.status == 'damaged' %}selected{% endif %}>damaged</option>
+              <option value="reserved" {% if item.status == 'reserved' %}selected{% endif %}>reserved</option>
+            </select>
+              </div>
+            </div>
+
+            <div class="col-md-6 px-2">
+              <div class="input-group">
+                <span class="input-group-text" id="basic-addon11">{% trans "Purchase" %} {% trans "Price" %}</span>
+                <input type="number" id="barcode" name="price" value="{{ item.purchase_price }}" class="form-control" placeholder="Enter Item(s) Purchase Price" required>  
+              </div>
+            </div>
+            <div class="col-md-6 px-2">
+              <div class="input-group">
+                <span class="input-group-text" id="basic-addon11">{% trans "Purchase" %} {% trans "Date" %}</span>
+                  <input type="date"  id="barcode" name="date" class="form-control" value="{{ item.purchase_date|format_date }}" placeholder="Enter Item(s) Purchase Date" required>
+              </div>
+            </div>
+
+            
+             
+           </div>
+            <div class="row">
+            <div class="px-2 py-3">
+              <button class="btn btn-sm btn-success me-sm-3 me-1" id="savebtn{{ item.id }}">{% trans "Save" %}</button>
+              <a href="{% url 'stock-delete' product.id %}" class="btn btn-sm  btn-danger me-sm-3 me-1 delete-transaction"  data-transaction-product="{{ product.product.name|capfirst }}" data-transaction-items="{{ product.stock_quantity }}" data-transaction-warehouse="{{ warehouse.name|capfirst }}">{% trans "Delete" %}</a>
+              
+              </div>
+            </div>
+
+         </form>
+
+        </div>
+      </div>
+    </div>
+    </div>
+      {% endfor %}
+    </div>
+    <div class="row">
+    <div class="p-4">
+      <a href="{% url 'stock-delete' product.id %}" class="btn btn-danger me-sm-3 me-1 delete-transaction"  data-transaction-product="{{ product.product.name|capfirst }}" data-transaction-items="{{ product.stock_quantity }}" data-transaction-warehouse="{{ warehouse.name|capfirst }}">{% trans "Delete" %}</a>
+      <a href="{% url 'warehouses-stock-edit' warehouse.id %}" class="btn btn-secondary me-sm-3 me-1">{% trans "Back" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
+<!--/ Update Warehouses Form -->
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+  $('.barcode').on('keydown', function() {
+            for(var i = document.getElementsByClassName("barerror").length; i>= 0; i--){
+              document.getElementsByClassName("barerror")[i].innerHTML="";
+            }
+        });
+    $(document).ready(function() {
+        $('.myForm').submit(function(e) {
+
+            e.preventDefault(); // Prevent the default form submission
+            var form = $(this);
+            var id = form.find('[name="id"]').val();
+            document.getElementById(`savebtn${id}`).innerHTML="Loading...";
+
+            // Perform barcode uniqueness check
+            var enteredBarcode = form.find('[name="barcode"]').val();
+
+            // Make an AJAX request to check barcode uniqueness
+            $.ajax({
+                type: 'GET',
+                url: '{% url "checkbarcode" %}?barcode=' + enteredBarcode+'&id=' + id,
+                success: function(response) {
+                    // If barcode is unique, allow form submission
+                    if(response == "found"){
+                      document.getElementById(`barerror${id}`).innerHTML="Barcode not unique!";
+                    }
+                    else if(response == "invalid"){
+                      document.getElementById(`barerror${id}`).innerHTML="Invalid Barcode!";
+                    }
+                    else if(response == "not found"){
+                     form.off('submit').submit(); 
+                    }
+                },
+                error: function(error) {
+                    // If barcode is not unique, handle accordingly (show error message, etc.)
+                    alert('Barcode is not unique. Please enter a unique barcode.');
+                },
+                complete: function() {
+                    document.getElementById(`savebtn${id}`).innerHTML = "Save";
+                }
+            });
+            
+        });
+        $('#myForm2').submit(function(e) {
+
+          e.preventDefault(); // Prevent the default form submission
+          var form = $(this);
+          document.getElementById('rsavebtn').innerHTML="Loading...";
+
+          // Perform barcode uniqueness check
+          var enteredBarcode = form.find('[name="barcode"]').val();
+
+          // Make an AJAX request to check barcode uniqueness
+          $.ajax({
+              type: 'GET',
+              url: '{% url "checkbarcode" %}?barcode=' + enteredBarcode,
+              success: function(response) {
+                  // If barcode is unique, allow form submission
+                  if(response == "found"){
+                    document.getElementById('barerror').innerHTML="Barcode not unique!";
+                  }
+                  else if(response == "invalid"){
+                    document.getElementById('barerror').innerHTML="Invalid Barcode!";
+                  }
+                  else if(response == "not found"){
+                   form.off('submit').submit(); 
+                  }
+              },
+              error: function(error) {
+                  // If barcode is not unique, handle accordingly (show error message, etc.)
+                  alert('Barcode is not unique. Please enter a unique barcode.');
+              },
+              complete: function() {
+                  document.getElementById('rsavebtn').innerHTML = "Save";
+              }
+          });
+          
+      });
+    });
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get reference to the barcode input field
+    
+    // Listen for keydown event on the document
+    document.addEventListener('keydown', function(event) {
+        // Check if the key pressed is a valid alphanumeric character
+        var isAlphaNumericKey = event.key.length === 1 && event.key.match(/[a-z0-9]/i);
+
+        if (document.activeElement.tagName === 'INPUT' && isAlphaNumericKey) {
+            // Append the key to the input field value
+            if(event.key.length > 1){
+              document.activeElement.value = event.key;
+            }else{
+              document.activeElement.value += event.key;
+            }
+            
+            
+            // Prevent default action of the keypress (e.g., typing in the input field)
+            event.preventDefault();
+        }
+    });
+});
+</script>
+
+
+
+{% endblock %}

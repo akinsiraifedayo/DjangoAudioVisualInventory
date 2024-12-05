@@ -1,0 +1,163 @@
+{
+  "menu": [
+    {
+      "url": "index",
+      "name": "Dashboard",
+      "icon": "menu-icon tf-icons ti ti-smart-home",
+      "slug": "dashboard"
+    },
+
+    {
+      "menu_header": "Clientele"
+    },
+    {
+      "name": "Clients",
+      "icon": "menu-icon tf-icons ti ti-mood-heart",
+      "slug": "clients",
+      "submenu": [
+        {
+          "url": "clients",
+          "name": "Clients",
+          "slug": "clients"
+        },
+        {
+          "url": "clients-add",
+          "name": "Add Clients",
+          "slug": "clients-add"
+        }
+      ]
+    },
+    {
+      "name": "Companies",
+      "icon": "menu-icon tf-icons ti ti-building",
+      "slug": "companies",
+      "submenu": [
+        {
+          "url": "companies",
+          "name": "Companies",
+          "slug": "companies"
+        },
+        {
+          "url": "companies-add",
+          "name": "Add Company",
+          "slug": "companies-add"
+        }
+      ]
+    },
+    {
+      "menu_header": "Schedules"
+    },
+    {
+      "name": "Booking",
+      "icon": "menu-icon tf-icons ti ti-calendar",
+      "slug": "events",
+      "submenu": [
+        {
+          "url": "app-booking",
+          "name": "Booking Calendar",
+          "slug": "app-booking"
+        },
+        {
+          "url": "events",
+          "name": "Booking List",
+          "slug": "events"
+        }
+      ]
+    },
+    {
+      "menu_header": "User Accounts & Roles"
+    },
+    {
+      "name": "Accounts",
+      "icon": "menu-icon tf-icons ti ti-users",
+      "permission": "user.view_user",
+      "slug": "app-user",
+      "submenu": [
+        {
+          "url": "app-user-list",
+          "name": "Users",
+          "slug": "app-user-list"
+        },
+        {
+          "name": "View",
+          "slug": "app-user-view",
+          "submenu": [
+            {
+              "url": "app-user-view-account",
+              "name": "Account",
+              "slug": "app-user-view-account"
+            },
+            {
+              "url": "app-user-view-security",
+              "name": "Security",
+              "slug": "app-user-view-security"
+            },
+            {
+              "url": "app-user-view-billing",
+              "name": "Billing & Plans",
+              "slug": "app-user-view-billing"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "icon": "menu-icon tf-icons ti ti-crown",
+      "permission": "user.view_user",
+      "slug": "app-user",
+      "submenu": [
+         {
+          "url": "app-role-list",
+          "name": "Manage Roles",
+          "slug": "app-role-list"
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "icon": "menu-icon tf-icons ti ti-shopping-cart",
+      "slug": "products",
+      "submenu": [
+        {
+          "url": "Product:products",
+          "name": "Products",
+          "slug": "products-inventory"
+        },
+        {
+          "url": "Product:products-create",
+          "name": "Create Product",
+          "slug": "products-create"
+        }
+      ]
+    },
+    {
+      "menu_header": "Stock and Warehousing"
+    },
+    
+    {
+      "name": "Warehouses",
+      "icon": "menu-icon tf-icons ti ti-building-warehouse",
+      "slug": "products",
+      "submenu": [
+        {
+          "url": "warehouses",
+          "name": "Warehouses",
+          "slug": "warehouses"
+        },
+        {
+          "url": "warehouses-add",
+          "name": "Add Warehouse",
+          "slug": "warehouses-add"
+        }
+      ]
+    },
+
+    {
+      "url": "stock-transfer",
+      "name": "Transfers",
+      "icon": "menu-icon tf-icons ti ti-truck",
+      "slug": "transfers"
+    }
+  ]
+}

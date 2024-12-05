@@ -1,0 +1,271 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Fullcalendar - Apps{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/fullcalendar/fullcalendar.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/quill/editor.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/@form-validation/umd/styles/index.min.css' %}" />
+<link rel='stylesheet' href="{% static 'css/style.css' %}"
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/fullcalendar/fullcalendar.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/bundle/popular.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'js/ui-modals.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/css/pages/app-calendar.css' %}" />
+{% endblock page_css %}
+
+{% block page_js %}
+{{ block.super }}
+<script>
+    var evented = {{ events|safe }};
+</script>
+<script src="{% static 'js/app-booking-events2.js' %}"></script>
+<script src="{% static 'js/app-booking2.js' %}"></script>
+<script src="{% static 'js/forms-selects.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+
+<div class="card app-calendar-wrapper">
+  <div class="row g-0">
+    <!-- Calendar Sidebar -->
+    <div class="col app-calendar-sidebar" id="app-calendar-sidebar">
+      <div class="border-bottom p-4 my-sm-0 mb-3">
+        <div class="d-grid">
+          <button class="btn btn-primary btn-toggle-sidebar" data-bs-toggle="offcanvas" data-bs-target="#addEventSidebar" aria-controls="addEventSidebar">
+            <i class="ti ti-plus me-1"></i>
+            <span class="align-middle">Add Event</span>
+          </button>
+        </div>
+      </div>
+      <div class="p-3">
+        <!-- inline calendar (flatpicker) -->
+        <div class="inline-calendar"></div>
+
+        <hr class="container-m-nx mb-4 mt-3">
+
+        <!-- Filter -->
+        <div class="mb-3 ms-3">
+          <small class="text-small text-muted text-uppercase align-middle">{% translate "Filter" %}</small>
+        </div>
+
+        <div class="form-check mb-2 ms-3">
+          <input class="form-check-input select-all" type="checkbox" id="selectAll" data-value="all" checked>
+          <label class="form-check-label" for="selectAll">View All</label>
+        </div>
+
+        <div class="app-calendar-events-filter ms-3">
+          <div class="form-check form-check-danger mb-2">
+            <input class="form-check-input input-filter" type="checkbox" id="select-personal" data-value="personal" checked>
+            <label class="form-check-label" for="select-personal">Personal</label>
+          </div>
+          <div class="form-check mb-2">
+            <input class="form-check-input input-filter" type="checkbox" id="select-business" data-value="business" checked>
+            <label class="form-check-label" for="select-business">Business</label>
+          </div>
+          <div class="form-check form-check-warning mb-2">
+            <input class="form-check-input input-filter" type="checkbox" id="select-family" data-value="family" checked>
+            <label class="form-check-label" for="select-family">Family</label>
+          </div>
+          <div class="form-check form-check-success mb-2">
+            <input class="form-check-input input-filter" type="checkbox" id="select-holiday" data-value="holiday" checked>
+            <label class="form-check-label" for="select-holiday">Holiday</label>
+          </div>
+          <div class="form-check form-check-info">
+            <input class="form-check-input input-filter" type="checkbox" id="select-etc" data-value="etc" checked>
+            <label class="form-check-label" for="select-etc">ETC</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Calendar Sidebar -->
+
+    <!-- Calendar & Modal -->
+    <div class="col app-calendar-content">
+      <div class="card shadow-none border-0">
+        <div class="card-body pb-0">
+          <!-- FullCalendar -->
+          <div id="calendar"></div>
+        </div>
+      </div>
+      <div class="app-overlay"></div>
+      <!-- FullCalendar Offcanvas -->
+      <div class="calendarform offcanvas offcanvas-end event-sidebar" tabindex="-1" id="addEventSidebar" aria-labelledby="addEventSidebarLabel">
+        <div class="offcanvas-header my-1">
+          <h5 class="offcanvas-title" id="addEventSidebarLabel">Add Event</h5>
+          <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body pt-0">
+          <form class="event-form2 pt-0" id="eventForm2" method="POST">
+            {% csrf_token %}
+            <div class="mb-3  cdiv">
+              <label class="form-label" for="eventLabel">Client <a href="#" class="btn btn-link text-decoration-none text-purple" onclick="addclient()">Can't find client? Click here</a>
+              </label>
+              {{ form.client }}
+            </div>
+              
+            <div class="mb-3">
+              <label class="form-label" for="eventName">Name</label>
+              {{ form.name }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventLabel">Project Type</label>
+              {{ form.project_type }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventLabel">{% translate "status" %}</label>
+              {{ form.event_type }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventLabel">Event Manager</label>
+              {{ form.event_manager }}
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label" for="eventStartDate">Start Date</label>
+              {{ form.start }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventEndDate">End Date</label>
+              {{ form.end }}
+            </div>
+            <div class="mb-3">
+              <label class="switch">
+                {{ form.all_day }}
+                <span class="switch-toggle-slider">
+                  <span class="switch-on"></span>
+                  <span class="switch-off"></span>
+                </span>
+                <span class="switch-label">All Day</span>
+              </label>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventURL">Event URL</label>
+              {{ form.url }}
+            </div>
+            <div class="mb-3 select2-primary">
+              <label class="form-label" for="eventGuests">Event Location</label>
+              {{ form.location }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="eventDescription">Description</label>
+              {{ form.description }}
+            </div>
+            <div class="mb-3 d-flex justify-content-sm-between justify-content-start my-4">
+              <div>
+                <button type="submit" class="btn btn-primary me-sm-3 me-1">Add</button>
+                <button type="reset" class="btn btn-label-secondary btn-cancel me-sm-0 me-1" data-bs-dismiss="offcanvas">Cancel</button>
+              </div>
+              <div><button class="btn btn-label-danger btn-delete-event d-none">Delete</button></div>
+            </div>
+          </div>
+
+
+          </form>
+        </div>
+      </div>
+    </div>
+    <!-- /Calendar & Modal -->
+  </div>
+</div>
+
+    <!-- Modal -->
+          <div class="modal fade" id="modalCenter" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="modalCenterTitle"></h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="row">
+                    <div class="col mb-3">
+                      <span class=" modalh1">This will discard any unsaved changes.</span><br>
+                      <span class="modalh2"> Are you sure you want to continue<span class="text-danger">?</span></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-primary" onclick="addclient()">Add Client</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="youTubeModal" style="width: 0px; height: 0px;">
+          <iframe style="width: 0px; height: 0px;"></iframe>
+        </div>
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+ {% autoescape off %}
+
+
+
+  <script type="text/javascript">
+    if("{{ message }}" != ""){
+      window.alert("{{ message }}");
+    }
+
+
+
+
+    
+    function addclient(){
+      url = "{% url 'clients-add' %}";
+      window.location.href = url;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </script>
+ {% endautoescape %}
+<script>
+
+  function noresfunc(){
+    document.getElementsByClassName("select2-results__message")[0].innerHTML ="<button class='btn btn-primary' onclick='addnew()'  data-bs-toggle='modal' data-bs-target='#modalCenter'>Add A New Client</button>";
+  }
+
+
+ 
+
+  $(document).ready(function() {
+      // Add event listener for the input event on the input field
+      $('.cdiv').on('input','input', function() {
+        // Get the typed value
+        var inputValue = $(this).val();
+
+        noresfunc();
+      });
+    });
+
+
+</script>
+{% endblock %}

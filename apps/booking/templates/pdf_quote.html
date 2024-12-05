@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Event Order Quote</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .event-date {
+      text-align: right;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .event-info {
+      margin-bottom: 20px;
+    }
+    .item-list {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .item-list th, .item-list td {
+      border: 1px solid #dddddd;
+      padding: 8px;
+      text-align: left;
+    }
+    .item-list th {
+      background-color: #f2f2f2;
+    }
+    .website-name {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .company-logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .company-logo img {
+      max-width: 200px; /* Adjust the maximum width of the logo */
+    }
+    .blueborder{
+      height: 20px;
+      width: 100%;
+      background-color: #2f3349;
+    }
+    .bfirst{
+      margin-bottom: 20px;
+    }
+    .blast{
+      margin-top: 20px;
+    }
+    .totdiv{
+       padding: 10px 0px;
+       width: 100%;
+       display: flex;
+       justify-content: center;
+    }
+
+    .posttotdiv{
+      width: 100%;
+      text-align: center;
+    }
+    .pretotdiv{
+      margin: 50px 0px;
+    }
+    .website-name h2{
+      color: #2f3349;
+    }
+  </style>
+</head>
+<body>
+  <div class="blueborder bfirst"></div>
+  <div class="event-date">
+    <p><strong>Date:</strong> {{ current_date }}</p>
+  </div>
+  <div style="width: 100%; display: flex; justify-content: center;">
+      <div class="company-logo" style="margin-right: 10px;">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAAAwCAYAAACooNxlAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAQGSURBVHgB1ZndUtNAFIDPJkLBGaet3njJI8AbyBOID+BQGMHqOE4BvW64VqDcQb2wvIFvgD6B3jnjjcx46TipF/Jjs1nP2TY1DelPkt1t+GaAhKRN8uXs2d2zDJDtDbcCimAM2nvN8geYAjub7ooQUIIMMPlFT9sCFOILsXvQLDtgkJ2q64BgdciIBRqwGKtvbeINGkKVDEKLEPnFhqSolEFoEyK/XLMU1TIIrULkBTRJ0SGD0C5EXkSxFF0yCCNC5IWklJ8OZESnDMKYEILzTv3l+g8HUrK96dZ0yiCMCRHCxx8OOOBJJWW76lYYYwegGWNCfOH1t0nKi/XvzqSflTIEew8GMCaE878D+17nqv589dvYhzQpgzAixPcpOkRovyP3fZ9XRknZeeaumJRBGBLSGdgPR8swKa833EXgZmUQZoRgMu1v96Jj4DhKqT7+2n94kuEzdopTz0wz1zTcAs2Emwv1NNFcEoKkwJ25+4fTkkEEEXIGmuCh5hLNJVFse7bCLfg8LRlEIOQLaKA79vD629FcMnAj1gwUZu+iCwbTpCeEfQQNhHMH96mpxEeHZd2CuQLKYNOVIe+FfvF5/wTvtQ2KCSJCRorvxZ7TlXEPZRidRQxF3kWjUW4zizVAIcFQnehGR8zFLTtXMgSw1kCMYm31FP88AAV4/FJGCInxvPNrx//LsCEXYAvhllgaeDWciTWhqMfxe00kLjpyJ4NgzGkclc8GhNA/fCaWs0oJute43JFHGUIwZ++4eEjb1xqvCilBMo1GR15l7DeLu8F+bDYLpEDK8Ql1t9HouAkyiKHpnaTw+eRSeG+uEo6OXMoA1ojKIEb2d9QdSykCJl6apPwRjg7qUnOXQLF73T8ubsUegQnBddMWPtXqqHNIRMf7g93shRyDBDJo8JUb8OXuNUuPhh2eeESEC9gVfMqTUedQ7ujmj5zKwObPb4u1USckGiKSFJxvOMOO+5g3uHeZSxnUa1LzpzQw6rzEY+a3R8XdOCndWseVnKAVCuXcyaBec5wMItUkIk4K9SqUUEmGbc1CXujLwF5zkvNTz6qiUig6CoXSjZZBZC5AvKr+ruOKnIMDdZQxA7mhN1lLIoNQUpGpPflVs21b+6raxKAMS4jlN+/KiUfaykpUpheURmH5YimNDPlZUMT+UbklsHygo/KWCMuqpJVBKC9iTnNNBR+nFkzj06K8dkdvh9qv6UgJ1zSyoK3MXau6C5Zgp3iBBdBM3DQ+LVrr/iakqJRBaF8I0SlFtQzCyMqQHimshTljDRRjbKlMqZQxNY0sGFshylqnDTG2ppEF44uptZpbsi8YLYgtQkLkZG0e5ycTTOPTMpXVZSnl3H4ICeEW/5R0spaUf0sXK/fo7oKqAAAAAElFTkSuQmCC" alt="Company Logo">
+  </div>
+  <div class="website-name">
+    <h2>Duoson Inventory</h2>
+  </div>
+  </div>
+   <div class="header">
+    <h2>Event Order Quote</h2>
+  </div>
+
+  <div class="event-info">
+    <p><strong>Event Location:</strong> {{ event_location }}</p>
+    <p><strong>Event Date:</strong> {{ event_date }}</p>
+    <p><strong>Contact Person:</strong> {{ contact_person }}</p>
+  </div>
+
+<div class="pretotdiv">
+
+<hr>
+<div class="totdiv">
+  <div class="posttotdiv">
+    <p><strong style="margin-right: 40px !important;">Quote Total: </strong> ${{ total }}</p>
+  </div>
+</div>
+
+<hr>
+  
+</div>
+
+
+  <table class="item-list">
+    <thead>
+      <tr>
+        <th>S/N</th>
+        <th>Item</th>
+        <th>Quantity</th>
+        <th>Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ item.name }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.price }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="blueborder blast"></div>
+</body>
+</html>

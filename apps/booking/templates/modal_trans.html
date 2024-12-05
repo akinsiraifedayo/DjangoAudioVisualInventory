@@ -1,0 +1,122 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'vendor/libs/spinkit/spinkit.css' %}" />
+
+<style type="text/css">
+  .modal-content{
+    height: calc(800px - calc(var(--bs-modal-margin) + var(--bs-modal-margin))); !important;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .rounded-top{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 200px
+  }
+  .modal-dialog{
+    max-width: 600px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content:center;
+  }
+  .rsmall{
+    height: 30px;
+    display: block;
+  }
+  .overlay{
+    height: 100%;
+    width: 100%;
+    z-index: 200000000;
+    background: rgba(100, 100, 100, 0.3);
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nooverlay{
+    height: 0;
+    width: 0;
+    overflow: hidden;
+    display: hidden;
+  }
+</style>
+
+<div class="nooverlay" id="inioverlay">
+  <div class="sk-chase sk-primary">
+          <div class="sk-chase-dot"></div>
+          <div class="sk-chase-dot"></div>
+          <div class="sk-chase-dot"></div>
+          <div class="sk-chase-dot"></div>
+          <div class="sk-chase-dot"></div>
+          <div class="sk-chase-dot"></div>
+        </div>
+</div>
+
+
+<div class="modal fade" id="transModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-simple modal-pricing">
+    <div class="modal-content p-2 p-md-5">
+      <div class="modal-body pt-0">
+        <button type="button" id="closebtn2" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="py-0 rounded-top">
+
+          <h5 class="text-center mb-2">Transfer <span id="pname"></span>:<span id="ibar"></span> to {{ order.primary_warehouse }} </h5>
+          
+            <div class="row">
+                <div class="col mb-3">
+                  <input type="text" id="tbar"  hidden>
+                  <input type="text" id="wareid" value="{{ order.primary_warehouse.id }}" hidden>
+                  <div id="tcountd" style="display:none;">
+                    <label>Count:</label>
+                  <input type="number" id="tcount" class="form-control mb-2" placeholder="Enter Item count" >
+                  <label>Select Warehouse:</label>
+                  <select id="twarehouse" class="form-control select2">
+                    {% for warehouse in nonwarehouses %}
+                    <option value={{ warehouse.id }}>{{ warehouse.name }}</option>
+                    {% endfor %}                    
+                  </select>
+                </div>
+                  <input type="number" id="warepid" class="form-control" value="0" style="display:none;">
+                 
+                </div>
+            </div>
+
+          <div class="text-center">
+          <button type="submit" class="btn btn-primary" onclick="requestTrans()"  id="transbtn">Request Transfer <i class="fa fa-truck mx-1"></i></button>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+
+  function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Check if the cookie contains the csrfToken
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+
+
+</script>
+{% block page_js %}
+<script src="{% static 'js/pages-pricing.js' %}"></script>
+{% endblock page_js %}

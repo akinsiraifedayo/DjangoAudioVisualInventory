@@ -1,0 +1,526 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/css/pages/app-logistics-dashboard.css' %}" />
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+{% endblock page_css %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/app-logistics-dashboard.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light"></span> {% translate "Dashboard" %}
+</h4>
+
+<!-- Card Border Shadow -->
+<div class="row">
+  <div class="col-sm-6 col-lg-3 mb-4">
+    <div class="card card-border-shadow-primary">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 pb-1">
+          <div class="avatar me-2">
+            <span class="avatar-initial rounded bg-label-primary"><i class="ti ti-package ti-md"></i></span>
+          </div>
+          <h4 class="ms-1 mb-0">{{ items.count }}</h4>
+        </div>
+        <p class="mb-1">All Registered Items</p>
+
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3 mb-4">
+    <div class="card card-border-shadow-info">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 pb-1">
+          <div class="avatar me-2">
+            <span class="avatar-initial rounded bg-label-info"><i class='ti ti-thumb-up ti-md'></i></span>
+          </div>
+          <h4 class="ms-1 mb-0">{% get_items_count items "available" %}</h4>
+        </div>
+        <p class="mb-1">Available Items</p>
+        
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3 mb-4">
+    <div class="card card-border-shadow-warning">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 pb-1">
+          <div class="avatar me-2">
+            <span class="avatar-initial rounded bg-label-warning"><i class='ti ti-lock ti-md'></i></span>
+          </div>
+          <h4 class="ms-1 mb-0">{% get_items_count items "reserved" %}</h4>
+        </div>
+        <p class="mb-1">Reserved Items</p>
+       
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3 mb-4">
+    <div class="card card-border-shadow-danger">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2 pb-1">
+          <div class="avatar me-2">
+            <span class="avatar-initial rounded bg-label-danger"><i class='ti ti-alert-triangle ti-md'></i></span>
+          </div>
+          <h4 class="ms-1 mb-0">{% get_items_count items "damaged" %}</h4>
+        </div>
+        <p class="mb-1">Damaged Items</p>
+      </div>
+    </div>
+  </div>
+  
+</div>
+<!--/ Card Border Shadow -->
+<div class="row">
+  <!-- Vehicles overview -->
+  <div class="col-xxl-8 mb-4 order-5 order-xxl-0">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title mb-0">
+          <h5 class="m-0">Orders overview</h5>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="d-none d-lg-flex vehicles-progress-labels mb-4">
+          <div class="vehicles-progress-label on-the-way-text" style="width: {% get_orders_percent orders "quote" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}">Quote</div>
+          <div class="vehicles-progress-label unloading-text" style="width: {% get_orders_percent orders "hold" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}">Hold</div>
+          <div class="vehicles-progress-label loading-text" style="width: {% get_orders_percent orders "ready_to_pack" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}">Ready To Pack</div>
+          <div class="vehicles-progress-label loading-text" style="width: {% get_orders_percent orders "packed" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}">Packed</div>
+          <div class="vehicles-progress-label waiting-text text-nowrap" style="width: {% get_orders_percent orders "on_site" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}">On Site</div>
+          <div class="vehicles-progress-label waiting-text text-nowrap" style="width: {% get_orders_percent orders "returned" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}">Returned</div>
+          <div class="vehicles-progress-label waiting-text text-nowrap" style="width: {% get_orders_percent orders "ready_to_invoice" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}">Ready To Invoice</div>
+          <div class="vehicles-progress-label waiting-text text-nowrap" style="width: {% get_orders_percent orders "invoiced" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}">Invoiced</div>
+        </div>
+        <div class="vehicles-overview-progress progress rounded-2 my-4" style="height: 46px;">
+          <div class="progress-bar fw-medium text-start bg-primary text-dark px-3 rounded-0" role="progressbar" style="width: {% get_orders_percent orders "quote" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">{% rounded percent %}%</div>
+          <div class="progress-bar fw-medium text-start bg-warning text-dark px-3 rounded-0" role="progressbar" style="width: {% get_orders_percent orders "hold" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">{% rounded percent %}%</div>
+          <div class="progress-bar fw-medium text-start bg-danger text-dark px-3 rounded-0" role="progressbar" style="width: {% get_orders_percent orders "ready_to_pack" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">{% rounded percent %}%</div>
+          <div class="progress-bar fw-medium text-start bg-light text-dark px-3 rounded-0" role="progressbar" style="width: {% get_orders_percent orders "packed" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">{% rounded percent %}%</div>
+          <div class="progress-bar fw-medium text-start bg-body text-dark px-3 rounded-0" role="progressbar" style="width: {% get_orders_percent orders "on_site" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">{% rounded percent %}%</div>
+          <div class="progress-bar fw-medium text-start bg-secondary text-dark px-3 rounded-0" role="progressbar" style="width: {% get_orders_percent orders "returned" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">{% rounded percent %}%</div>
+          <div class="progress-bar fw-medium text-start bg-info text-dark px-3 rounded-0" role="progressbar" style="width: {% get_orders_percent orders "ready_to_invoice" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">{% rounded percent %}%</div>
+          <div class="progress-bar fw-medium text-start bg-success text-dark px-3 rounded-0" role="progressbar" style="width: {% get_orders_percent orders "invoiced" as percent %}{{ percent }}%; {% if percent == 0 %}display:none;{% endif %}" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">{% rounded percent %}%</div>
+        </div>
+        <div class="table-responsive">
+          <table class="table card-table">
+            <tbody class="table-border-bottom-0">
+              {% get_orders_percent orders "quote" as percent %}
+              <tr {% if percent == 0 %}style="display: none;"{% endif %}>
+                <td class="w-50 ps-0">
+                  <div class="d-flex justify-content-start align-items-center">
+                    <div class="me-2">
+                      <i class="ti ti-shopping-cart mt-n1"></i>
+                    </div>
+                    <h6 class="mb-0 fw-normal">Quote</h6>
+                  </div>
+                </td>
+                <td class="text-end pe-0 text-nowrap">
+                  <h6 class="mb-0"></h6>
+                </td>
+                <td class="text-end pe-0">
+                  <span class="fw-medium">{% rounded percent %}%</span>
+                </td>
+              </tr>
+              {% get_orders_percent orders "hold" as percent %}
+              <tr {% if percent == 0 %}style="display: none;"{% endif %}>
+                
+                <td class="w-50 ps-0">
+                  <div class="d-flex justify-content-start align-items-center">
+                    <div class="me-2">
+                      <i class="ti ti-player-pause mt-n1"></i>
+                    </div>
+                    <h6 class="mb-0 fw-normal">Hold</h6>
+                  </div>
+                </td>
+                <td class="text-end pe-0 text-nowrap">
+                  <h6 class="mb-0"></h6>
+                </td>
+                <td class="text-end pe-0">
+                  <span class="fw-medium">{% rounded percent %}%</span>
+                </td>
+              </tr>
+              {% get_orders_percent orders "ready_to_pack" as percent %}
+              <tr {% if percent == 0 %}style="display: none;"{% endif %}>
+                
+                <td class="w-50 ps-0">
+                  <div class="d-flex justify-content-start align-items-center">
+                    <div class="me-2">
+                      <i class="ti ti-package mt-n1"></i>
+                    </div>
+                    <h6 class="mb-0 fw-normal">Ready To Pack</h6>
+                  </div>
+                </td>
+                <td class="text-end pe-0 text-nowrap">
+                  <h6 class="mb-0"></h6>
+                </td>
+                <td class="text-end pe-0">
+                  <span class="fw-medium">{% rounded percent %}%</span>
+                </td>
+              </tr>
+              {% get_orders_percent orders "packed" as percent %}
+              <tr {% if percent == 0 %}style="display: none;"{% endif %}>
+                
+                <td class="w-50 ps-0">
+                  <div class="d-flex justify-content-start align-items-center">
+                    <div class="me-2">
+                      <i class="ti ti-package-export mt-n1"></i>
+                    </div>
+                    <h6 class="mb-0 fw-normal">Packed</h6>
+                  </div>
+                </td>
+                <td class="text-end pe-0 text-nowrap">
+                  <h6 class="mb-0"></h6>
+                </td>
+                <td class="text-end pe-0">
+                  <span class="fw-medium">{% rounded percent %}%</span>
+                </td>
+              </tr>
+              {% get_orders_percent orders "on_site" as percent %}
+              <tr {% if percent == 0 %}style="display: none;"{% endif %}>
+                <td class="w-50 ps-0">
+                  <div class="d-flex justify-content-start align-items-center">
+                    <div class="me-2">
+                      <i class="ti ti-navigation mt-n1"></i>
+                    </div>
+                    <h6 class="mb-0 fw-normal">On Site</h6>
+                  </div>
+                </td>
+                <td class="text-end pe-0 text-nowrap">
+                  <h6 class="mb-0"></h6>
+                </td>
+                <td class="text-end pe-0">
+                  <span class="fw-medium">{% rounded percent %}%</span>
+                </td>
+              </tr>
+              {% get_orders_percent orders "returned" as percent %}
+              <tr {% if percent == 0 %}style="display: none;"{% endif %}>
+                
+                <td class="w-50 ps-0">
+                  <div class="d-flex justify-content-start align-items-center">
+                    <div class="me-2">
+                      <i class="ti ti-truck-return mt-n1"></i>
+                    </div>
+                    <h6 class="mb-0 fw-normal">Returned</h6>
+                  </div>
+                </td>
+                <td class="text-end pe-0 text-nowrap">
+                  <h6 class="mb-0"></h6>
+                </td>
+                <td class="text-end pe-0">
+                  <span class="fw-medium">{% rounded percent %}%</span>
+                </td>
+              </tr>
+              {% get_orders_percent orders "ready_to_invoice" as percent %}
+              <tr {% if percent == 0 %}style="display: none;"{% endif %}>
+                
+                <td class="w-50 ps-0">
+                  <div class="d-flex justify-content-start align-items-center">
+                    <div class="me-2">
+                      <i class="ti ti-report-analytics mt-n1"></i>
+                    </div>
+                    <h6 class="mb-0 fw-normal">Ready To Invoice</h6>
+                  </div>
+                </td>
+                <td class="text-end pe-0 text-nowrap">
+                  <h6 class="mb-0"></h6>
+                </td>
+                <td class="text-end pe-0">
+                  <span class="fw-medium">{% rounded percent %}%</span>
+                </td>
+              </tr>
+              {% get_orders_percent orders "invoiced" as percent %}
+              <tr {% if percent == 0 %}style="display: none;"{% endif %}>
+                
+                <td class="w-50 ps-0">
+                  <div class="d-flex justify-content-start align-items-center">
+                    <div class="me-2">
+                      <i class="ti ti-receipt mt-n1"></i>
+                    </div>
+                    <h6 class="mb-0 fw-normal">Invoiced</h6>
+                  </div>
+                </td>
+                <td class="text-end pe-0 text-nowrap">
+                  <h6 class="mb-0"></h6>
+                </td>
+                <td class="text-end pe-0">
+                  <span class="fw-medium">{% rounded percent %}%</span>
+                </td>
+              </tr>
+              
+              
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Transfers statistics-->
+  <div class="col-lg-4 col-xxl-4 mb-4 order-3 order-xxl-1">
+    <div class="card" style="height: 100%;">
+      <a href="{% url 'stock-transfer' %}" class="text-dark">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Pending Transfers</h5>
+        </div>
+      </div>
+      <div class="card-body">
+        <div>
+          {% for warehouse in warehouses %}
+            {% gettrans warehouse as waretrans %}
+            {% if waretrans.count > 0 %}
+              <p class="text-muted fs-5 mb-0">{{ warehouse.name }}</p>
+              <p>{{ waretrans.count }} pending transfers</p>
+              {% for trans in waretrans %}
+
+              {% endfor %}
+            {% endif %}
+
+            {% endfor %}
+        </div>
+      </div>
+    </a>
+    </div>
+  </div>
+  <!--/ Shipment statistics -->
+  <!-- Upcoming Events -->
+  <div class="col-lg-6 col-xxl-8 mb-4 order-2 order-xxl-2">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between mb-2">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Upcoming Events</h5>
+          <small class="text-muted">{{ event_count }} upcoming events in this month</small>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="deliveryPerformance" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="ti ti-dots-vertical"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="deliveryPerformance">
+            <a class="dropdown-item" href="javascript:void(0);">Select All</a>
+            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+            <a class="dropdown-item" href="javascript:void(0);">Share</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body  upcomeve">
+        <ul class="p-0 m-0">
+          {% for eve in up_events %}
+          <li class="d-flex mb-4 pb-1">
+            <div class="avatar flex-shrink-0 me-3">
+              <span class="avatar-initial rounded bg-label-primary"><i class="ti ti-package"></i></span>
+            </div>
+            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+              <div class="me-2">
+                <h6 class="mb-0 fw-normal">{{ eve.name }}</h6>
+                <small class="text-success fw-normal d-block">
+                <span>Start: {{eve.start}} </span><br/>
+                <span>End: {{eve.end}} </span><br/>
+                {% if eve.client %}
+                  <span class="text-dark">Client: {{ eve.client }}</span>
+                {% endif %}
+                </small>
+              </div>
+              <div class="user-progress">
+                <h6 class="mb-0">{{ eve.get_status_display }}</h6>
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <!--/ Delivery Performance -->
+
+  <!-- Orders by Countries -->
+  <div class="col-md-6 col-xxl-4 mb-4 order-0 order-xxl-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between pb-2">
+        <div class="card-title mb-1">
+          <h5 class="m-0 me-2">Orders On Site</h5>
+          <small class="text-muted">{{ on_site.count }} Orders on site</small>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="salesByCountryTabs" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="ti ti-dots-vertical ti-sm text-muted"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="salesByCountryTabs">
+            <a class="dropdown-item" href="javascript:void(0);">Download</a>
+            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+            <a class="dropdown-item" href="javascript:void(0);">Share</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="nav-align-top">
+          <ul class="nav nav-tabs nav-fill" role="tablist">
+            <li class="nav-item">
+              <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#navs-justified-all" aria-controls="navs-justified-new" aria-selected="true">All</button>
+            </li>
+            <li class="nav-item">
+              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#navs-justified-link-expired" aria-controls="navs-justified-link-expired" aria-selected="false">Expired</button>
+            </li>
+            <li class="nav-item">
+              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#navs-justified-link-ongoing" aria-controls="navs-justified-link-ongoing" aria-selected="false">Ongoing</button>
+            </li>
+          </ul>
+          <div class="tab-content px-2 mx-1 pb-0 ordertab-content">
+            <div class="tab-pane fade show active ordertab" id="navs-justified-all" role="tabpanel">
+
+              {% for eve in on_site %}
+              {% if forloop.counter > 1 %}
+              <div class="border-bottom border-bottom-dashed mt-0 mb-4"></div>
+              {% endif %}
+              <ul class="timeline mb-0 pb-1">
+                <li class="timeline-item ps-4 border-left-dashed pb-1">
+                  <span class="timeline-indicator-advanced timeline-indicator-success">
+                    <i class="ti ti-circle-check"></i>
+                  </span>
+                  <div class="timeline-event px-0 pb-0">
+                    <div class="timeline-header">
+                      <small class="text-success text-uppercase fw-medium">Warehouse</small>
+                    </div>
+                    <h6 class="mb-1">{% geteventwarehouse eve as warehouse %} {{ warehouse }}</h6>
+                    <p class="text-muted mb-0">{% geteventwarehouseloc eve as warehouse %} {{ warehouse }}</p>
+                  </div>
+                </li>
+                <li class="timeline-item ps-4 border-transparent">
+                  <span class="timeline-indicator-advanced timeline-indicator-primary">
+                    <i class="ti ti-map-pin"></i>
+                  </span>
+                  <div class="timeline-event px-0 pb-0">
+                    <div class="timeline-header">
+                      <small class="text-primary text-uppercase fw-medium">Event Location</small>
+                    </div>
+                   <a href="{{ eve.get_url }}"> <h6 class="mb-1">{{ eve.name }}</h6>
+                    <p class="text-muted mb-0">{{ eve.location |default:"" }}</p>
+                    <span>End Date: <span class="{% if eve.check_end %}text-danger{% endif %}">{{ eve.end }}</span></span>
+                  </a>
+                  </div>
+                </li>
+              </ul>
+              
+              {% endfor %}
+              
+            </div>
+
+
+
+
+
+
+
+            
+
+            <div class="tab-pane fade" id="navs-justified-link-expired" role="tabpanel">
+              
+              {% for eve in ended %}
+              {% if forloop.counter > 1 %}
+              <div class="border-bottom border-bottom-dashed mt-0 mb-4"></div>
+              {% endif %}
+              <ul class="timeline mb-0 pb-1">
+                <li class="timeline-item ps-4 border-left-dashed pb-1">
+                  <span class="timeline-indicator-advanced timeline-indicator-success">
+                    <i class="ti ti-circle-check"></i>
+                  </span>
+                  <div class="timeline-event px-0 pb-0">
+                    <div class="timeline-header">
+                      <small class="text-success text-uppercase fw-medium">Warehouse</small>
+                    </div>
+                    <h6 class="mb-1">{% geteventwarehouse eve as warehouse %} {{ warehouse }}</h6>
+                    <p class="text-muted mb-0">{% geteventwarehouseloc eve as warehouse %} {{ warehouse }}</p>
+                  </div>
+                </li>
+                <li class="timeline-item ps-4 border-transparent">
+                  <span class="timeline-indicator-advanced timeline-indicator-primary">
+                    <i class="ti ti-map-pin"></i>
+                  </span>
+                  <div class="timeline-event px-0 pb-0">
+                    <div class="timeline-header">
+                      <small class="text-primary text-uppercase fw-medium">Event Location</small>
+                    </div>
+                   <a href="{{ eve.get_url }}"> <h6 class="mb-1">{{ eve.name }}</h6>
+                    <p class="text-muted mb-0">{{ eve.location |default:"" }}</p>
+                    <span>End Date: <span class="{% if eve.check_end %}text-danger{% endif %}">{{ eve.end }}</span></span>
+                  </a>
+                  </div>
+                </li>
+              </ul>
+              
+              {% endfor %}
+            </div>
+
+
+
+
+
+
+
+            <div class="tab-pane fade" id="navs-justified-link-ongoing" role="tabpanel">
+              
+              {% for eve in ongoing %}
+              {% if forloop.counter > 1 %}
+              <div class="border-bottom border-bottom-dashed mt-0 mb-4"></div>
+              {% endif %}
+              <ul class="timeline mb-0 pb-1">
+                <li class="timeline-item ps-4 border-left-dashed pb-1">
+                  <span class="timeline-indicator-advanced timeline-indicator-success">
+                    <i class="ti ti-circle-check"></i>
+                  </span>
+                  <div class="timeline-event px-0 pb-0">
+                    <div class="timeline-header">
+                      <small class="text-success text-uppercase fw-medium">Warehouse</small>
+                    </div>
+                    <h6 class="mb-1">{% geteventwarehouse eve as warehouse %} {{ warehouse }}</h6>
+                    <p class="text-muted mb-0">{% geteventwarehouseloc eve as warehouse %} {{ warehouse }}</p>
+                  </div>
+                </li>
+                <li class="timeline-item ps-4 border-transparent">
+                  <span class="timeline-indicator-advanced timeline-indicator-primary">
+                    <i class="ti ti-map-pin"></i>
+                  </span>
+                  <div class="timeline-event px-0 pb-0">
+                    <div class="timeline-header">
+                      <small class="text-primary text-uppercase fw-medium">Event Location</small>
+                    </div>
+                   <a href="{{ eve.get_url }}"> <h6 class="mb-1">{{ eve.name }}</h6>
+                    <p class="text-muted mb-0">{{ eve.location |default:"" }}</p>
+                    <span>End Date: <span class="{% if eve.check_end %}text-danger{% endif %}">{{ eve.end }}</span></span>
+                  </a>
+                  </div>
+                </li>
+              </ul>
+              
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/ Orders by Countries -->
+
+</div>
+
+{% endblock %}

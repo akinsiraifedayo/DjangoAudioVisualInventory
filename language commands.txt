@@ -1,0 +1,3 @@
+sudo apt-get install gettext
+django-admin makemessages -l fr
+django-admin compilemessages

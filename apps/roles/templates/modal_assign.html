@@ -1,0 +1,173 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'vendor/libs/spinkit/spinkit.css' %}" />
+
+<style type="text/css">
+  .modal-content{
+    height: calc(100vh - calc(var(--bs-modal-margin) + var(--bs-modal-margin))); !important;
+  }
+  .preavatar{
+    display: flex !important;
+    width: 100%;
+    justify-content: center;
+  }
+  .rsmall{
+    height: 30px;
+    display: block;
+  }
+  .contained{
+    overflow-y: scroll;
+    height: calc(100vh - 300px);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overflow: -moz-scrollbars-none;
+  }
+  .modal-body{
+    height: 80%;
+    overflow: scroll;
+     scrollbar-width: none;
+    -ms-overflow-style: none;
+    overflow: -moz-scrollbars-none;
+  }
+  .overlay{
+    height: 100%;
+    width: 100%;
+    z-index: 200000000;
+    background: rgba(100, 100, 100, 0.3);
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nooverlay{
+    height: 0;
+    width: 0;
+    overflow: hidden;
+    display: hidden;
+  }
+</style>
+
+<div class="nooverlay" id="inioverlay">
+  <div class="sk-chase sk-primary">
+          <div class="sk-chase-dot"></div>
+          <div class="sk-chase-dot"></div>
+          <div class="sk-chase-dot"></div>
+          <div class="sk-chase-dot"></div>
+          <div class="sk-chase-dot"></div>
+          <div class="sk-chase-dot"></div>
+        </div>
+</div>
+
+<!-- Pricing Modal -->
+<div class="modal fade" id="pricingModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-simple modal-pricing">
+    <div class="modal-content p-2 p-md-5">
+      <div class="modal-body">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Pricing Plans -->
+        <div class="py-0 rounded-top">
+          <h2 class="text-center mb-2">Assign Role to Users - {{ role }}</h2>
+          <p class="text-center">{{ role.description }}</p>
+          
+
+          <div class="contained">
+          <div class="row mx-0 gy-3">
+            <!-- Basic -->
+            {% for user in allusers %}
+            <div class="col-md mb-md-0 mb-2">
+            <div class="form-check custom-option custom-option-icon">
+              <label class="form-check-label custom-option-content" for="customCheckboxIcon{{ forloop.counter }}">
+                <span class="custom-option-body">
+                  <div class="preavatar"><div class="avatar"><img src="{{ user.Profile_pic.url | default:'' }}" alt="Avatar" class="rounded-circle"></div></div>
+                  <span class="custom-option-title"> {{ user.get_name }} </span>
+                  <small class="text-uppercase text-primary rsmall"><b> {{ user.get_roles }} </b></small>
+                </span>
+                <input class="form-check-input fdf" type="checkbox" value="{{ user.id }}" id="customCheckboxIcon{{ forloop.counter }}" />
+              </label>
+            </div>
+          </div>
+
+            {% endfor %}
+            {% if allusers.count == 0 %}
+              <h3 class="text-warning text-center my-5">No User to Assign</h3>
+            {% endif %}
+          </div>
+          
+          </div>
+          <div class="text-center">
+            <input type="text" name="role" id="roleInput" value="{{ role.id }}" hidden>
+            <input type="text" name="users" id="selusers" hidden>
+          <button type="submit" class="btn btn-primary" onclick="makeform()" id="savebtn">Save</button>
+        </div>
+        </div>
+        <!--/ Pricing Plans -->
+      </div>
+    </div>
+  </div>
+</div>
+<!--/ Pricing Modal -->
+
+
+<script type="text/javascript">
+  function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Check if the cookie contains the csrfToken
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+
+  function makeform(){
+    document.getElementById("inioverlay").className ="overlay";
+    const inp = document.getElementById("selusers")
+    inp.value= "";
+    elements = document.getElementsByClassName("fdf")
+    for (var i = elements.length - 1; i >= 0; i--) {
+      if(elements[i].checked == true){
+        inp.value+= elements[i].value +" ";
+      }
+    }
+
+    var role = document.getElementById('roleInput').value;
+        var users = document.getElementById('selusers').value;
+        var csrfToken = getCookie('csrftoken');
+
+        // Create a FormData object to store form data
+        var formData = new FormData();
+        formData.append('role', role);
+        formData.append('users', users);
+
+        var xhr = new XMLHttpRequest();
+
+        // Define what happens on successful data submission
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                window.location.reload();
+            } else {
+                console.error('Failed to send form data');
+            }
+        };
+
+        xhr.open('POST', '{% url "app-role-assign-users" %}', true);
+        xhr.setRequestHeader('X-CSRFToken', csrfToken);
+
+        // Send the FormData object as the request body
+        xhr.send(formData);
+        document.getElementById("inioverlay").className ="noverlay";
+        document.getElementById("savebtn").innerHTML ="loading..."
+        
+  }
+</script>
+{% block page_js %}
+<script src="{% static 'js/pages-pricing.js' %}"></script>
+{% endblock page_js %}

@@ -1,0 +1,77 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Warehouses{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/@form-validation/umd/styles/index.min.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/bundle/popular.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/warehouses-add-update.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{% translate "Warehouses" %} /</span> {% translate "New" %} {% translate "Warehouse" %}
+</h4>
+<!-- Add Warehouses Form -->
+<div class="card">
+  <div class="card-body">
+    <form class="add-warehouse pt-0" id="addWarehouseForm" action="{% url 'warehouses-add' %}" method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label" for="customer-name">Name</label>
+        <input type="text" class="form-control" id="warehouse-name" name="name" placeholder="Enter Name" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="transaction-date">Location</label>
+        <input type="text" id="warehouse-location" class="form-control" name="location" placeholder="Enter Location" />
+      </div>
+      <!-- <div class="mb-3">
+        <label class="form-label" for="products">Products</label>
+        <div class="select2-info"></div>
+        <select id="warehouse-products" class="select2 form-select" name="products">
+          <option value="" disabled selected class="d-none"></option>
+          {% for product in products %}
+          <option value="{{product.id}}">{{product.product.name}}</option>
+          {% endfor %}
+        </select>
+      </div> -->
+
+      <div class="mb-3">
+       <label class="form-label" for="customer-status">Contact Person</label>
+        <input type="text" id="contact-email" class="form-control" name="contact_person" placeholder="Enter Contact Person's Name" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="contact-email">Contact Email</label>
+        <input type="text" id="contact-email" class="form-control" name="contact_email" placeholder="Enter Email" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="phone">Contact Phone</label>
+        <input type="phone" id="contact-phone" class="form-control" name="contact_phone" placeholder="Enter Phone" />
+      </div>
+      
+      
+      <button type="submit" class="btn btn-primary me-sm-3 me-1" name="submitButton">Submit</button>
+      <a href="{% url 'warehouses' %}" class="btn btn-secondary">Back</a>
+    </form>
+  </div>
+</div>
+<!--/ Add Warehouses Form -->
+{% endblock %}

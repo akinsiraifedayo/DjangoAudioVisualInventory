@@ -1,0 +1,120 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Validation - Forms{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-select/bootstrap-select.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/typeahead-js/typeahead.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/tagify/tagify.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/@form-validation/umd/styles/index.min.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-select/bootstrap-select.js' %}"></script>
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/typeahead-js/typeahead.js' %}"></script>
+<script src="{% static 'vendor/libs/tagify/tagify.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/bundle/popular.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/form-validation.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{% translate "Forms" %} /</span> {% translate "Validation" %}
+</h4>
+<div class="row mb-4">
+  <!-- Browser Default -->
+  <div class="col-md mb-4 mb-md-0">
+    <div class="card">
+      <h5 class="card-header">Client Information</h5>
+      <div class="card-body">
+        <form class="browser-default-validation" method="post">
+          {% csrf_token %}
+          {% if form.errors %}
+
+          <div class="alert alert-danger alert-dismissible" role="alert">
+           {{ form.errors }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+          </button>
+        </div>
+         
+
+          {% endif %}
+          <div class="mb-3">
+            <label class="form-label" for="client-first-name">Title</label>
+            {{ form.title }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="client-first-name">First Name</label>
+            {{ form.first_name }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="client-last-name">Last Name</label>
+            {{ form.last_name }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="client-email">Email</label>
+            {{ form.email }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="client-mobile">Mobile</label>
+            {{ form.mobile }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="client-street">Street Address</label>
+            {{ form.street }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="client-house-no">House Number</label>
+            {{ form.houseNo }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="client-postal">Postal Code</label>
+            {{ form.postal }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="client-state">State</label>
+            {{ form.state }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="client-country">Country</label>
+            {{ form.country }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="client-company">Company</label>
+            {{ form.company }}
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  
+  <!-- /Browser Default -->
+
+  <!-- Bootstrap Validation -->
+
+  <!-- /Bootstrap Validation -->
+</div>
+
+{% endblock %}

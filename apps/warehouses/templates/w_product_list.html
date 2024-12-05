@@ -1,0 +1,127 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Warehouses{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/w_products-list.js' %}"></script>
+<script src="{% static 'js/w_products-delete.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+
+
+<!-- Warehouses Toast -->
+{% if messages %}
+<div class="toast-container end-0 m-1 me-4">
+  {% for message in messages %}
+  <div class="toast {% if message.tags == 'success' %}bg-success{% elif message.tags == 'error' %}bg-danger{% else %}bg-warning{% endif %}" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="true" data-bs-delay="2000">
+    <div class="toast-body text-center text-white fw-medium">
+      {{ message }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+<!--/ Warehouses Toast -->
+
+<!-- Warehouses Table -->
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{% translate "Warehouse Products" %} /</span> {% translate "Warehouse Products" %} {% translate "List" %}
+</h4>
+<!-- permission required: view_transaction -->
+{% if request.user|has_permission:"w_products.view_product"%}
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <div class="d-flex align-items-end">
+              <h3 class="mb-0 me-2">{{ w_products_count }}</h3>
+              <small class="text-primary"></small>
+            </div>
+            <small>Total Warehouse Products</small>
+          </div>
+          <span class="badge bg-label-primary rounded p-2">
+            <i class="ti ti-arrows-transfer-down ti-sm"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<div class="card">
+  <div class="card-datatable table-responsive">
+    <table class="datatables-transaction table">
+      <thead class="border-top">
+        <tr class="text-nowrap">
+          <th></th>
+          <th>Id</th>
+          <th>Name</th>
+          <th>Stock</th>
+          <th>Available</th>
+          <th>Reserved</th>
+          <th>Damaged</th>
+          <th>{% translate "actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for w_product in w_products %}
+        <tr>
+          <td></td>
+          <td>{{ w_product.id }}</td>
+          <td class="text-nowrap fw-medium text-heading">{{ w_product.product.name|capfirst }}</td>
+          <td class="text-nowrap">{{ w_product.stock_quantity }}</td>
+          <td class="text-nowrap">{{ w_product.available_quantity }}</td>
+          <td class="text-nowrap">{{ w_product.reserved_quantity }}</td>
+          <td class="text-nowrap">{{ w_product.damaged_quantity }}</td>
+          
+          <td>
+            <div class="d-flex align-items-center gap-3">
+              <!-- permission required: edit_w_product -->
+              {% if request.user|has_permission:"w_products.edit_w_product" %}
+              <a href="{% url 'w_products-update' w_product.id %}" class="text-body"><i class='ti ti-edit ti-sm'></i></a>
+              {% endif %}
+              <!-- permission required: delete_w_product -->
+              {% if request.user|has_permission:"w_products.delete_w_product" %}
+              <a href="{% url 'w_products-delete' w_product.id %}" class="text-body delete-transaction" data-transaction-username="{{ w_product.name|capfirst }}"><i class="ti ti-trash ti-sm"></i></a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+<!--/ Warehouses Table -->
+<script>
+var addWproductBtn = '{% if request.user|has_permission:"w_products.add_w_product" %}' + true + '{% endif %}';
+
+</script>
+
+
+{% endblock %}

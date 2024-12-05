@@ -1,0 +1,420 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Companies{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+<style>
+  .added-to-cart {
+      background-color: #DFF0D8; /* Change to the desired color */
+  }
+</style>
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script src="{% static 'js/products-list.js' %}"></script>
+<script src="{% static 'js/products-delete.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+
+
+<!-- Warehouses Toast -->
+{% if messages %}
+<div class="toast-container end-0 m-1 me-4">
+  {% for message in messages %}
+  <div class="toast {% if message.tags == 'success' %}bg-success{% elif message.tags == 'error' %}bg-danger{% else %}bg-warning{% endif %}" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="true" data-bs-delay="2000">
+    <div class="toast-body text-center text-white fw-medium">
+      {{ message }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+<!--/ Warehouses Toast -->
+
+<!-- Warehouses Table -->
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{% translate "Products" %} /</span> Event {{event.name}}
+</h4>
+<!-- permission required: view_transaction -->
+{% if request.user|has_permission:"clients.view_client"%}
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <div class="d-flex align-items-end">
+              <h3 class="mb-0 me-2">{{ product_count }}</h3>
+              <small class="text-primary"></small>
+            </div>
+            <small>Total Product</small>
+          </div>
+          <span class="badge bg-label-primary rounded p-2">
+            <i class="ti ti-arrows-transfer-down ti-sm"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+<div class="card">
+  <div class="card-datatable table-responsive" style="overflow-x: unset;">
+    <table class="datatables-transaction table">
+      <div class="col-lg-6 mx-2 card-header">
+        <label for="select2Basic" class="form-label">Companies</label>
+        <select id="select2Basic" class="select2 form-select form-select-lg" data-allow-clear="true" onchange="refilter(this.value)">
+          <option value="ALL" {% if selected_company_id == None %} selected {% endif %}>All Warehouses</option>
+          {% for warehouse in warehouses %}
+              <option value="{{ warehouse.id }}" {% if warehouse.slug == selected_warehouse_slug %} selected {% endif %}>{{ warehouse.name }}</option>
+          {% endfor %}
+      </select>
+      </div>
+      <thead class="border-top">
+        <tr class="text-nowrap">
+          <th></th>
+          <th>Id</th>
+          <th>Image</th>
+          <th>Name</th>
+          <th>Manufacturer</th>
+          <th>Availability</th>
+          <th>{% translate "price" %}</th>
+          <th>{% translate "actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr id="product-row-{{ product.id }}">
+            <td></td>
+            <td>{{ product.id }}</td>
+            <td><img src="{{ product.image.url }}" class="product-image-small"> <span class="fw-medium">{{ product.barcode }}</span></td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.manufacturer }}</td>
+            <td><span class="badge bg-label-primary me-1">{{ product.availability }}</span></td>
+            <td>
+                <div class="number-spinner">
+                    <div class="input-group">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default btn-spinner-minus" data-dir="dwn" onclick="decrementQuantity('{{ product.id }}')">-</button>
+                        </span>
+                        <input type="text" class="form-control text-center" name="product_quantity" id="quantity-{{ product.id }}" value="1">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default btn-spinner-plus" data-dir="up" onclick="incrementQuantity('{{ product.id }}')">+</button>
+                        </span>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="dropdown">
+                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{% url 'Product:product-edit' product.id %}"><i class="ti ti-pencil me-1"></i> Edit</a>
+                        <a class="dropdown-item" href="#" onclick="makedelete('{{ product.name }}', '{{ product.getdelete }}')" data-bs-toggle="modal" data-bs-target="#modalCenter"><i class="ti ti-trash me-1"></i> Delete</a>
+                        <a class="dropdown-item" href="#" onclick="addToCart('{{ product.id }}', event)"><i class="ti ti-shopping-cart me-1"></i> Add to Cart</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+
+    <div class="row g-4 mb-4">
+      <div class="col-sm-6 col-xl-3">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-start justify-content-between">
+              <div class="content-left">
+                <div class="d-flex align-items-end">
+                  <h3 class="mb-0 me-2">{{ product_count }}</h3>
+                  <small class="text-primary"></small>
+                </div>
+                <small>Added Products</small>
+                <form id="chosen-items-form" method="post">
+                  {% csrf_token %}
+                  <input id="product_count" type="number" hidden/>
+                  <!-- Your form fields here -->
+                  <button class='btn btn-primary' id="submit-cart-button" type="submit">Submit Items</button>
+              </form>
+                
+              </div>
+              <span class="badge bg-label-primary rounded p-2">
+                <i class="ti ti-arrows-transfer-down ti-sm"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+    </div>
+
+
+    <table class="table">
+      <thead>
+          <tr>
+              <th>ID</th>
+              <th>Barcode</th>
+              <th>Name</th>
+              <th>Manufacturer</th>
+              <th>Availability</th>
+              <th>Quantity</th>
+          </tr>
+      </thead>
+      <tbody id="cart-items">
+          <!-- Cart items will be added here -->
+      </tbody>
+  </table>
+
+
+    <div class="modal fade" id="modalCenter" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalCenterTitle">Modal title</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row g-2">
+                <div class="col mb-0 text-center">
+                  <span class="text-danger h5">Are you sure you want to delete?</span><br/>
+                  <span class="text-muted">This will remove product from all warehouses</span>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">No</button>
+              <div id="delbtndiv"><button type="button" id="delbtn" class="btn btn-primary">Yes</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+  </div>
+</div>
+{% endif %}
+<!--/ Warehouses Table -->
+
+{% autoescape off %}
+<script type="text/javascript">
+
+var addWarehouseBtn = '{% if request.user|has_permission:"companies.add_client" %}' + true + '{% endif %}';
+
+
+    function makedelete(title, url){
+      document.getElementById("modalCenterTitle").innerHTML= title;
+      document.getElementById("delbtndiv").innerHTML= `<button type="button" id="delbtn" onclick="deleteproduct('${url}')" class="btn btn-primary">Yes</button>`;
+    }
+  
+  
+    function refilter(warehouse){
+      url = '{% url "event-product-list" event.id %}';
+      if(warehouse == "ALL" || warehouse == ""){
+        window.location.href = url;
+      }else{
+        window.location.href = url+warehouse+'/';
+      }
+    }
+    if("{{ warehouse }}" != "None"){
+      document.getElementById('select2Basic').value="{{ warehouse }}";
+    }
+  
+   function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+  
+  
+    function deleteproduct(url){
+            var csrftoken = getCookie('csrftoken');
+            $.ajax(url, {
+                      type: "GET",
+                        timeout: 50000,
+                        success: function(data,status, xhr){
+                        if(data == 'success'){
+                          window.location.reload();
+                        }
+                    },
+                    });
+          }
+</script>
+
+<script>
+var addedProducts = {};
+
+function incrementQuantity(productId) {
+    var quantityInput = document.getElementById('quantity-' + productId);
+    var clonedRowInput = document.getElementById('cloned-quantity-' + productId);
+
+    var currentQuantity = parseInt(quantityInput.value);
+    quantityInput.value = currentQuantity + 1;
+    clonedRowInput.value = currentQuantity + 1;
+}
+
+function decrementQuantity(productId) {
+    var quantityInput = document.getElementById('quantity-' + productId);
+    var clonedRowInput = document.getElementById('cloned-quantity-' + productId);
+
+    var currentQuantity = parseInt(quantityInput.value);
+    if (currentQuantity > 1) {
+        quantityInput.value = currentQuantity - 1;
+        clonedRowInput.value = currentQuantity - 1;
+    }
+}
+
+function addToCart(productId) {
+    if (!addedProducts[productId]) {
+        var row = document.getElementById('product-row-' + productId);
+        var clonedRow = row.cloneNode(true);
+        var cartItems = document.getElementById('cart-items');
+
+        // Remove action buttons from the cloned row
+        var actionCell = clonedRow.lastElementChild;
+        actionCell.innerHTML = '';
+
+        // Change the CSS
+        clonedRow.classList.add('added-to-cart');
+        row.style.backgroundColor = 'green';
+
+        cartItems.appendChild(clonedRow);
+
+        // Update cloned row's input IDs to prevent conflicts
+        var clonedInput = clonedRow.querySelector('.text-center');
+        clonedInput.id = 'cloned-quantity-' + productId;
+        clonedInput.setAttribute('data-product-id', productId);
+
+        // Mark product as added
+        addedProducts[productId] = true;
+
+        // Create a delete button
+        var deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.classList.add('btn', 'btn-danger');
+        deleteButton.addEventListener('click', function() {
+            cartItems.removeChild(clonedRow);
+            delete addedProducts[productId];
+            // Get the main row corresponding to the cloned row and reset the color
+            var mainRow = document.getElementById('product-row-' + productId);
+            mainRow.style.backgroundColor = '';
+        });
+        actionCell.appendChild(deleteButton);
+    }
+    event.preventDefault()
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+
+  var allQuantityInputs = document.querySelectorAll('.form-control.text-center');
+
+    allQuantityInputs.forEach(function(input) {
+        input.addEventListener('input', function(event) {
+            var changedValue = parseInt(input.value);
+            var productId = input.dataset.productId;
+
+            // Get the corresponding input box in the main row
+            var mainRowInput = document.querySelector('#quantity-' + productId);
+
+            // Get the corresponding input box in the cloned row
+            var clonedRowInput = document.querySelector('#cloned-quantity-' + productId);
+
+            // Update the value of both input boxes
+            if (mainRowInput) {
+                mainRowInput.value = changedValue;
+            }
+            if (clonedRowInput) {
+                clonedRowInput.value = changedValue;
+            }
+        });
+    });
+
+  // Function to submit the items in the cart
+function submitCartItems() {
+    // Create a form element
+    var form = document.getElementById('chosen-items-form');
+
+    var eventId = document.createElement('input');
+    eventId.type = 'hidden';
+    eventId.name = 'event_id'
+    eventId.value = '{{ event.id }}';
+    form.appendChild(eventId);
+
+    // Loop through all items in the cart
+    var cartItems = document.querySelectorAll('.added-to-cart');
+    cartItems.forEach(function(item, index) {
+        // Create hidden input fields for product ID and quantity
+        var productIdInput = document.createElement('input');
+        productIdInput.type = 'hidden';
+        productIdInput.name = 'product_id_' + index; // Unique name for each item
+        productId = parseInt(item.id.match(/\d+/)[0])
+        productIdInput.value = productId;
+        form.appendChild(productIdInput);
+
+        var quantityInput = document.createElement('input');
+        quantityInput.type = 'hidden';
+        quantityInput.name = 'quantity_' + index; // Unique name for each item
+        quantityInput.value = item.querySelector('.text-center').value;
+        form.appendChild(quantityInput);
+    });
+
+    // Add the form to the document body
+    document.body.appendChild(form);
+
+    event.preventDefault();
+    // Submit the form
+    form.submit();
+
+}
+
+// Event listener for the submit button
+var submitButton = document.getElementById('submit-cart-button');
+submitButton.addEventListener('click', function() {
+    submitCartItems();
+});
+});
+
+
+
+</script>
+
+{% endautoescape %}
+
+
+
+
+{% endblock %}

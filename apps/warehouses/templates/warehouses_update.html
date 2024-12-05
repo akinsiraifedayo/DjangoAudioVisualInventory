@@ -1,0 +1,90 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Warehouses{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/@form-validation/umd/styles/index.min.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/bundle/popular.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/warehouses-add-update.js' %}"></script>
+<script src="{% static 'js/warehouses-delete.js' %}"></script>
+<script src="{% static 'js/modal-enable-otp.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+
+<h4 class="py-3 mb-4">
+  <span class="text-muted fw-light">{% translate "Warehouses" %} /</span> {% translate "Update" %} {% translate "Warehouse" %} #{{ warehouse.id }}
+</h4>
+
+<!-- Update Warehouses Form -->
+<div class="card">
+  <div class="card-body">
+    <form class="update-warehouse pt-0" id="UpdateWarehouseForm" action="{% url 'warehouses-update' warehouse.id %}" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="id" id="user_id">
+      <div class="mb-3">
+        <label class="form-label" for="customer-name">Name</label>
+        <input type="text" value="{{ warehouse.name }}" class="form-control" id="warehouse-name" name="name" placeholder="Enter Name" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="warehouse-date">Location</label>
+        <input type="text" value="{{ warehouse.location }}"  id="warehouse-location" class="form-control" name="location" placeholder="Enter Location" />
+      </div>
+      <div class="mb-3">
+        <label for="products" class="form-label">Products</label>
+        <div class="select2-info">
+            <select id="warehouse-products" class="select2 form-select" name="products" multiple>
+                {% for warehouse_product in warehouse_products %}
+                    <option value="{{ warehouse_product.id }}" {% if warehouse_product in warehouse.products.all %} selected {% endif %}>
+                        {{ warehouse_product.product.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+      <div class="mb-3">
+        <label class="form-label" for="customer-status">Contact Person</label>
+        <select id="contact-person" class="select2 form-select" name="contact_person">
+          <option value="Dayo" {% if warehouse.contact_person == 'Dayo' %} selected {% endif %}>Dayo</option>
+          <option value="David" {% if warehouse.contact_person == 'David' %} selected {% endif %}>David</option>
+          <option value="Daniel" {% if warehouse.contact_person == 'Daniel' %} selected {% endif %}>Daniel</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="email">Contact Email</label>
+        <input type="email"  value="{{ warehouse.contact_email }}" id="contact-email" class="form-control" name="contact_email" placeholder="Enter Email" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="phone">Contact Phone</label>
+        <input type="phone" value="{{ warehouse.contact_phone }}" id="contact-phone" class="form-control" name="contact_phone" placeholder="Enter Phone" />
+      </div>
+
+      
+      <button type="submit" class="btn btn-primary me-sm-3 me-1 data-submit">Save</button>
+      <a href="{% url 'warehouses-delete' warehouse.id %}" class="btn btn-danger me-sm-3 me-1 delete-transaction">Delete</a>
+      <a href="{% url 'warehouses' %}" class="btn btn-secondary me-sm-3 me-1">Back</a>
+    </form>
+  </div>
+</div>
+<!--/ Update Warehouses Form -->
+{% endblock %}
